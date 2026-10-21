@@ -188,7 +188,6 @@
           awaitingCommand = true;
           showMessage("Estou ouvindo. Diga seu comando agora.");
           if (status) status.textContent = "Palavra-chave reconhecida";
-          say("Estou ouvindo.");
         }
       }
     };
@@ -560,7 +559,7 @@
   const renderChatHistory = () => {
     if (!chatLog) return;
     chatLog.replaceChildren();
-    chatHistory.forEach((message) => {
+    chatHistory.slice(-2).forEach((message) => {
       const item = document.createElement("div");
       item.className = "chat-message " + message.who;
       item.textContent = message.text;
@@ -748,7 +747,7 @@
           "Content-Type": "application/json",
           "Accept": "text/event-stream"
         },
-        body: JSON.stringify({ message, stream: true, memories: userMemories }),
+        body: JSON.stringify({ message, stream: true, memories: userMemories, history: chatHistory.slice(0, -1).slice(-12).map((item) => ({ role: item.who === "user" ? "user" : "model", text: item.text })) }),
         signal: AbortSignal.timeout(100_000)
       });
 
