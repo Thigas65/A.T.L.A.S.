@@ -81,24 +81,52 @@
     });
   });
 
+  let activeRecognition = null;
+  const setListeningState = (listening) => {
+    if (!voiceButton) return;
+    voiceButton.setAttribute("aria-pressed", String(listening));
+    voiceButton.setAttribute("aria-label", listening ? "Parar de ouvir" : "Áudio");
+    voiceButton.title = listening ? "Parar de ouvir" : "Falar com o ATLAS";
+    voiceButton.classList.toggle("voice-listening", listening);
+  };
+
   if (voiceButton) {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    voiceButton.setAttribute("aria-pressed", "false");
+    voiceButton.title = "Falar com o ATLAS";
     voiceButton.addEventListener("click", () => {
+      if (activeRecognition) {
+        activeRecognition.stop();
+        showMessage("Parei de ouvir.");
+        if (status) status.textContent = "Microfone pausado";
+        return;
+      }
       if (!Recognition) {
-        const message = "Seu navegador não oferece reconhecimento de voz aqui. Você ainda pode testar os outros controles.";
-        showMessage(message);
+        showMessage("Este navegador não oferece reconhecimento de voz. Tente usar um navegador compatível ou digite sua mensagem.");
         if (status) status.textContent = "Reconhecimento de voz indisponível";
         return;
       }
+      if (!window.isSecureContext && location.hostname !== "localhost") {
+        showMessage("Para usar o microfone, abra o ATLAS por uma conexão segura (HTTPS).");
+        if (status) status.textContent = "Conexão segura necessária";
+        return;
+      }
       const recognition = new Recognition();
+      activeRecognition = recognition;
       recognition.lang = "pt-BR";
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      setListeningState(true);
       if (status) status.textContent = "Ouvindo…";
-      showMessage("Pode falar. Estou ouvindo.");
+      showMessage("Pode falar. Toque no microfone novamente para parar.");
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim();
+        const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+        if (!transcript) {
+          showMessage("Não consegui entender. Tente falar novamente.");
+          return;
+        }
         if (chatInput) {
+          chatInput.value = transcript;
           const answer = sendDemoMessage(transcript);
           say(answer);
         } else {
@@ -106,17 +134,26 @@
           respond(transcript);
         }
       };
-      recognition.onerror = () => {
+      recognition.onerror = (event) => {
+        const messages = {
+          "not-allowed": "O acesso ao microfone foi bloqueado. Permita o uso do microfone nas configurações do navegador.",
+          "no-speech": "Não detectei fala. Toque no microfone e tente novamente.",
+          "audio-capture": "Não encontrei um microfone disponível neste dispositivo."
+        };
         if (status) status.textContent = "Não foi possível ouvir";
-        showMessage("Não consegui captar sua voz. Confira a permissão do microfone e tente novamente.");
+        showMessage(messages[event.error] || "Não consegui captar sua voz. Confira o microfone e a permissão do navegador.");
       };
       recognition.onend = () => {
+        if (activeRecognition === recognition) activeRecognition = null;
+        setListeningState(false);
         if (status && status.textContent === "Ouvindo…") status.textContent = "Pronto";
       };
       try {
         recognition.start();
       } catch (_) {
-        showMessage("O reconhecimento já está ativo. Aguarde um instante e tente novamente.");
+        activeRecognition = null;
+        setListeningState(false);
+        showMessage("Não consegui iniciar o microfone. Aguarde um instante e tente novamente.");
       }
     });
   }
