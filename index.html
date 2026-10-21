@@ -56,6 +56,9 @@
     .core { transition: box-shadow .3s, filter .3s; }
     .core-mark { width: 58%; height: 58%; display: grid; place-items: center; }
     .core-mark svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 7px rgba(255,255,255,.45)); }
+    .core-mark .nucleus-spin { transform-origin: 50px 50px; animation: nucleus-spin 8s linear infinite; }
+    .core-mark .nucleus-counterspin { transform-origin: 50px 50px; animation: nucleus-spin 5s linear infinite reverse; }
+    @keyframes nucleus-spin { to { transform: rotate(360deg); } }
     .core-wrap.is-listening .core { animation: core-listen 1.45s ease-in-out infinite; }
     .core-wrap.is-speaking .core { animation: core-speak .55s ease-in-out infinite alternate; }
     .core-wrap.is-listening .orbit, .core-wrap.is-speaking .orbit { animation-duration: 3s; border-color: rgba(70,231,255,.75); }
@@ -210,7 +213,7 @@
     .rail-status small { display:block; margin-top:5px; font-size:11px; color:#9bc7e7; }
     main { position:relative; overflow:visible; padding:0 10px 0; justify-content:center; min-width:0; }
     .eyebrow, main > h1, .subtitle, .status, .hint { display:none; }
-    .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; transform:translateY(-9vh); }
+    .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; transform:translateY(-5cm); }
     .orbit { inset:3%; border:2px solid rgba(0,225,255,.95); border-radius:50%; box-shadow:0 0 10px rgba(0,205,255,.55), 0 0 22px rgba(0,119,255,.35), inset 0 0 8px rgba(0,190,255,.22); }
     .orbit::before, .orbit::after { width:6px; height:6px; background:#e6fdff; box-shadow:0 0 8px #00eaff, 0 0 17px #008cff, 0 0 26px rgba(0,140,255,.7); }
     .orbit.two { inset:8%; border:2px solid rgba(0,145,255,.95); border-radius:50%; box-shadow:0 0 10px rgba(0,111,255,.52), inset 0 0 10px rgba(0,111,255,.22); }
@@ -376,10 +379,18 @@
         <div class="core">
           <span class="core-mark" aria-hidden="true">
             <svg viewBox="0 0 100 100" role="img" aria-label="Símbolo geométrico azul do ATLAS">
-              <path d="M50 4 88 26v48L50 96 12 74V26Z" fill="none" stroke="#b7faff" stroke-width="2.2" opacity=".95"/>
-              <path d="M50 13 80 30v40L50 87 20 70V30Z" fill="none" stroke="#7ceeff" stroke-width="1.5" opacity=".85"/>
-              <circle cx="50" cy="50" r="27" fill="none" stroke="#e1fdff" stroke-width="1.8"/>
-              <circle cx="50" cy="50" r="19" fill="none" stroke="#7ceeff" stroke-width="1.4" opacity=".9"/>
+              <g class="nucleus-spin">
+                <circle cx="50" cy="50" r="29" fill="none" stroke="#b7faff" stroke-width="2" opacity=".95"/>
+                <ellipse cx="50" cy="50" rx="29" ry="12" fill="none" stroke="#7ceeff" stroke-width="1.5" opacity=".9"/>
+                <path d="M21 50H79 M50 21V79" fill="none" stroke="#7ceeff" stroke-width="1.2" opacity=".8"/>
+                <circle cx="50" cy="21" r="3" fill="#e6fdff"/>
+                <circle cx="79" cy="50" r="3" fill="#e6fdff"/>
+              </g>
+              <g class="nucleus-counterspin">
+                <circle cx="50" cy="50" r="18" fill="none" stroke="#e1fdff" stroke-width="1.8"/>
+                <ellipse cx="50" cy="50" rx="12" ry="29" fill="none" stroke="#46e7ff" stroke-width="1.5" opacity=".95"/>
+                <circle cx="50" cy="32" r="2.5" fill="#ffffff"/>
+              </g>
 
             </svg>
           </span>
