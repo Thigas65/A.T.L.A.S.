@@ -219,8 +219,28 @@
         app.classList.add("feature-mode");
         document.querySelector("#view-title").textContent = "Histórico";
         featureHeading.textContent = featureCopy.history[0];
-        featureDescription.textContent = featureCopy.history[1];
-        featureState.textContent = featureCopy.history[2];
+        featureDescription.textContent = chatHistory.length
+          ? "Mensagens salvas neste navegador (" + chatHistory.length + "). O histórico não é enviado para nenhum servidor."
+          : "Ainda não há mensagens salvas neste navegador. Comece uma conversa para ela aparecer aqui.";
+        featureState.textContent = chatHistory.length
+          ? "HISTÓRICO LOCAL · " + chatHistory.length + " MENSAGENS"
+          : "NENHUMA MENSAGEM SALVA";
+        const previousList = featurePanel.querySelector(".history-list");
+        if (previousList) previousList.remove();
+        if (chatHistory.length) {
+          const list = document.createElement("ol");
+          list.className = "history-list";
+          chatHistory.forEach((message) => {
+            const item = document.createElement("li");
+            const speaker = document.createElement("strong");
+            speaker.textContent = message.who === "user" ? "Você: " : "ATLAS: ";
+            const content = document.createElement("span");
+            content.textContent = message.text;
+            item.append(speaker, content);
+            list.appendChild(item);
+          });
+          featurePanel.appendChild(list);
+        }
       } else if (action === "voice") {
         app.classList.add("settings-mode");
         document.querySelector("#view-title").textContent = "Voz";
