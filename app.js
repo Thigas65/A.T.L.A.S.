@@ -190,10 +190,106 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.body.classList.contains("menu-open")) setMenuOpen(false);
   });
+  const memoryKey = "atlas-user-memories-v1";
+  const loadMemories = () => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(memoryKey) || "[]");
+      return Array.isArray(saved) ? saved.filter((item) => typeof item === "string" && item.trim()).slice(0, 12) : [];
+    } catch (_) { return []; }
+  };
+  let userMemories = loadMemories();
+  const persistMemories = () => {
+    try {
+      window.localStorage.setItem(memoryKey, JSON.stringify(userMemories));
+      return true;
+    } catch (_) {
+      showMessage("Não consegui salvar a memória neste navegador.");
+      return false;
+    }
+  };
   const featureCopy = {
-    history: ["Histórico", "As conversas ficam guardadas apenas neste navegador neste protótipo. A lista completa de conversas e a pesquisa ainda serão implementadas.", "HISTÓRICO SIMPLES DISPONÍVEL NO CHAT"],
-    memory: ["Memória do ATLAS", "A memória permitirá guardar preferências escolhidas por você, consultar o que foi salvo e apagar tudo quando quiser. Ela ainda não está ativa e nada está sendo memorizado além do histórico local do chat.", "RECURSO PLANEJADO · AINDA DESATIVADO"],
-    lab: ["Laboratório", "Um espaço futuro para experimentar ferramentas, integrações e novas capacidades do ATLAS. Vamos ativar cada ferramenta apenas quando estiver implementada e testada.", "RECURSO PLANEJADO · AINDA DESATIVADO"]
+    history: ["Histórico", "As mensagens da conversa atual ficam guardadas neste navegador. Você pode limpar a conversa pelo botão no chat.", "HISTÓRICO LOCAL"],
+    memory: ["Memória do ATLAS", "Guarde apenas informações que você queira que o ATLAS use como contexto. As memórias ficam neste navegador e são enviadas ao Gemini junto com suas mensagens para personalizar as respostas.", "MEMÓRIA LOCAL ATIVADA"],
+    lab: ["Ferramentas do ATLAS", "Use comandos simples no chat: pergunte “que horas são?” ou “que dia é hoje?”. Para contas, escreva “calcule 125 * (8 + 2)”.", "DATA, HORA E CALCULADORA BÁSICA DISPONÍVEIS"]
+  };
+
+  const renderMemoryManager = () => {
+    if (!featurePanel) return;
+    featurePanel.querySelector(".memory-manager")?.remove();
+    const manager = document.createElement("div");
+    manager.className = "memory-manager";
+    manager.style.cssText = "display:grid;gap:12px;margin-top:18px;text-align:left";
+    const label = document.createElement("label");
+    label.htmlFor = "atlas-memory-input";
+    label.textContent = "Nova memória (máximo 180 caracteres)";
+    const input = document.createElement("input");
+    input.id = "atlas-memory-input";
+    input.maxLength = 180;
+    input.placeholder = "Ex.: Prefiro respostas curtas e em português.";
+    input.style.cssText = "width:100%;padding:12px;border-radius:10px;border:1px solid #168bce;background:#06152c;color:#fff";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.textContent = "Salvar memória";
+    save.style.cssText = "padding:11px 14px;border-radius:10px;border:1px solid #00cfff;background:#06346b;color:#fff;cursor:pointer";
+    const list = document.createElement("div");
+    list.style.cssText = "display:grid;gap:8px";
+    const renderList = () => {
+      list.replaceChildren();
+      if (!userMemories.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "Nenhuma memória salva ainda.";
+        list.appendChild(empty);
+      }
+      userMemories.forEach((memory, index) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px;border:1px solid rgba(0,190,255,.35);border-radius:10px";
+        const text = document.createElement("span");
+        text.textContent = memory;
+        text.style.cssText = "overflow-wrap:anywhere;flex:1";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Apagar";
+        remove.setAttribute("aria-label", "Apagar memória " + (index + 1));
+        remove.style.cssText = "padding:7px 10px;border-radius:8px;border:1px solid #b54a67;background:#391326;color:#fff;cursor:pointer";
+        remove.addEventListener("click", () => {
+          userMemories.splice(index, 1);
+          persistMemories();
+          renderList();
+          featureState.textContent = "MEMÓRIAS SALVAS: " + userMemories.length;
+        });
+        row.append(text, remove);
+        list.appendChild(row);
+      });
+    };
+    save.addEventListener("click", () => {
+      const value = input.value.trim();
+      if (!value) { input.focus(); return; }
+      if (userMemories.length >= 12) {
+        showMessage("Você já tem 12 memórias. Apague uma antes de adicionar outra.");
+        return;
+      }
+      userMemories.push(value);
+      if (persistMemories()) {
+        input.value = "";
+        renderList();
+        featureState.textContent = "MEMÓRIAS SALVAS: " + userMemories.length;
+        showMessage("Memória salva neste navegador.");
+      }
+    });
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.textContent = "Apagar todas as memórias";
+    clear.style.cssText = "padding:10px;border-radius:10px;border:1px solid #b54a67;background:#391326;color:#fff;cursor:pointer";
+    clear.addEventListener("click", () => {
+      userMemories = [];
+      persistMemories();
+      renderList();
+      featureState.textContent = "MEMÓRIAS SALVAS: 0";
+      showMessage("Todas as memórias foram apagadas.");
+    });
+    manager.append(label, input, save, list, clear);
+    featurePanel.appendChild(manager);
+    renderList();
   };
   document.querySelectorAll("[data-menu-action]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -269,6 +365,18 @@
         featureHeading.textContent = featureCopy[action][0];
         featureDescription.textContent = featureCopy[action][1];
         featureState.textContent = featureCopy[action][2];
+        featurePanel.querySelector(".memory-manager")?.remove();
+        featurePanel.querySelector(".tools-note")?.remove();
+        if (action === "memory") {
+          featureState.textContent = "MEMÓRIAS SALVAS: " + userMemories.length;
+          renderMemoryManager();
+        } else if (action === "lab") {
+          const toolsNote = document.createElement("p");
+          toolsNote.className = "tools-note";
+          toolsNote.style.marginTop = "16px";
+          toolsNote.textContent = "Calculadora e data/hora funcionam localmente, sem enviar esses comandos ao Gemini quando reconhecidos.";
+          featurePanel.appendChild(toolsNote);
+        }
       }
     });
   });
@@ -329,8 +437,71 @@
 
   const API_URL = window.ATLAS_API_URL || "/api/chat";
 
+  const getLocalToolAnswer = (rawText) => {
+    const text = rawText.trim();
+    const query = text.toLocaleLowerCase("pt-BR");
+    if (/\b(que horas são|que horas sao|hora atual|horas são|horas sao)\b/.test(query)) {
+      return "Agora são " + new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date()) + ".";
+    }
+    if (/\b(que dia é hoje|que dia e hoje|data de hoje|qual é a data|qual e a data)\b/.test(query)) {
+      return "Hoje é " + new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(new Date()) + ".";
+    }
+    const calcMatch = text.match(/^(?:calcule|calcular|quanto é|quanto e|conta)\s+(.+)\??$/i);
+    if (!calcMatch) return null;
+    const expression = calcMatch[1].replace(/,/g, ".").replace(/[×]/g, "*").replace(/[÷]/g, "/").trim();
+    if (!/^[\d\s.+*/()%-]+$/.test(expression) || !/[\d]/.test(expression)) {
+      return "Não consegui interpretar essa conta. Use números e operadores +, -, *, / e parênteses.";
+    }
+    try {
+      const tokens = expression.match(/\d+(?:\.\d+)?|[()+*/%-]/g) || [];
+      if (tokens.join("") !== expression.replace(/\s/g, "")) return "A conta contém símbolos que não reconheço.";
+      let pos = 0;
+      const parsePrimary = () => {
+        if (tokens[pos] === "+") { pos++; return parsePrimary(); }
+        if (tokens[pos] === "-") { pos++; return -parsePrimary(); }
+        if (tokens[pos] === "(") {
+          pos++;
+          const value = parseExpression();
+          if (tokens[pos++] !== ")") throw new Error("parênteses");
+          return value;
+        }
+        const token = tokens[pos++];
+        if (!token || !/^\d+(?:\.\d+)?$/.test(token)) throw new Error("número");
+        return Number(token);
+      };
+      const parseTerm = () => {
+        let value = parsePrimary();
+        while (["*", "/", "%"].includes(tokens[pos])) {
+          const op = tokens[pos++], next = parsePrimary();
+          if ((op === "/" || op === "%") && next === 0) throw new Error("zero");
+          value = op === "*" ? value * next : op === "/" ? value / next : value % next;
+        }
+        return value;
+      };
+      const parseExpression = () => {
+        let value = parseTerm();
+        while (tokens[pos] === "+" || tokens[pos] === "-") {
+          const op = tokens[pos++], next = parseTerm();
+          value = op === "+" ? value + next : value - next;
+        }
+        return value;
+      };
+      const result = parseExpression();
+      if (pos !== tokens.length || !Number.isFinite(result)) throw new Error("conta");
+      return "O resultado é " + new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 8 }).format(result) + ".";
+    } catch (_) { return "Não consegui resolver essa conta. Confira a expressão e tente novamente."; }
+  };
+
   const sendDemoMessage = async (message) => {
+    const localAnswer = getLocalToolAnswer(message);
     addChatMessage(message, "user");
+    if (localAnswer !== null) {
+      addChatMessage(localAnswer, "atlas");
+      showMessage("Resposta calculada localmente.");
+      if (status) status.textContent = "Ferramenta local concluída";
+      if (chatInput) { chatInput.disabled = false; chatInput.focus(); }
+      return localAnswer;
+    }
     showMessage("Conectando ao Gemini…");
     if (status) status.textContent = "O ATLAS está começando a responder…";
     if (chatInput) chatInput.disabled = true;
@@ -344,7 +515,7 @@
           "Content-Type": "application/json",
           "Accept": "text/event-stream"
         },
-        body: JSON.stringify({ message, stream: true }),
+        body: JSON.stringify({ message, stream: true, memories: userMemories }),
         signal: AbortSignal.timeout(100_000)
       });
 
