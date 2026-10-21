@@ -345,7 +345,7 @@
           "Accept": "text/event-stream"
         },
         body: JSON.stringify({ message, stream: true }),
-        signal: AbortSignal.timeout(35_000)
+        signal: AbortSignal.timeout(100_000)
       });
 
       if (!response.ok) {
@@ -423,7 +423,10 @@
           ? "Não consegui acessar a IA. Se o site estiver publicado, confira o servidor e a variável GEMINI_API_KEY."
           : (error && error.message || "Não consegui conectar ao Gemini.");
       if (liveMessage) liveMessage.remove();
-      addChatMessage(messageText, "atlas");
+      const savedErrorText = streamedAnswer.trim()
+        ? streamedAnswer.trim() + "\n\n⚠️ A conexão foi interrompida antes da resposta terminar. Tente novamente."
+        : messageText;
+      addChatMessage(savedErrorText, "atlas");
       showMessage(messageText);
       if (status) status.textContent = "Conexão com IA indisponível";
       return "";
