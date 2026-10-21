@@ -211,9 +211,9 @@
     main { position:relative; overflow:visible; padding:0 10px 0; justify-content:center; min-width:0; }
     .eyebrow, main > h1, .subtitle, .status, .hint { display:none; }
     .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; transform:translateY(-9vh); }
-    .orbit { inset:2%; border:2px solid rgba(0,225,255,.9); box-shadow:0 0 12px rgba(0,205,255,.5), 0 0 30px rgba(0,119,255,.36), inset 0 0 12px rgba(0,190,255,.22); }
-    .orbit::before, .orbit::after { width:8px; height:8px; background:#d9fcff; box-shadow:0 0 10px #00eaff, 0 0 24px #008cff, 0 0 36px rgba(0,140,255,.7); }
-    .orbit.two { inset:7%; border:2px solid rgba(0,145,255,.92); box-shadow:0 0 14px rgba(0,111,255,.52), inset 0 0 14px rgba(0,111,255,.22); }
+    .orbit { inset:3%; border:2px solid rgba(0,225,255,.95); border-radius:50%; box-shadow:0 0 10px rgba(0,205,255,.55), 0 0 22px rgba(0,119,255,.35), inset 0 0 8px rgba(0,190,255,.22); }
+    .orbit::before, .orbit::after { width:6px; height:6px; background:#e6fdff; box-shadow:0 0 8px #00eaff, 0 0 17px #008cff, 0 0 26px rgba(0,140,255,.7); }
+    .orbit.two { inset:8%; border:2px solid rgba(0,145,255,.95); border-radius:50%; box-shadow:0 0 10px rgba(0,111,255,.52), inset 0 0 10px rgba(0,111,255,.22); }
     /* Removidas as órbitas ovais externas: manter apenas os círculos do núcleo. */
     .core { width:auto; height:auto; aspect-ratio:auto; border:0; border-radius:0; background:transparent; box-shadow:none; z-index:1; }
     .core::before { display:none; }
