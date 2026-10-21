@@ -1,0 +1,28 @@
+name: Validar ATLAS
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependências de teste
+        run: npm install
+      - name: Instalar navegador de teste
+        run: npx playwright install --with-deps chromium
+      - name: Verificar sintaxe JavaScript
+        run: npm run test:syntax
+      - name: Testar interface no navegador
+        run: npm test
