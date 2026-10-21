@@ -556,15 +556,18 @@
     saveSessions();
     try { window.localStorage.setItem(historyKey, JSON.stringify(chatHistory.slice(-40))); } catch (_) {}
   };
+  // Mostra somente a mensagem mais recente do usuário e a resposta mais recente.
+  // O histórico completo continua guardado em chatHistory para dar contexto à IA.
   const renderChatHistory = () => {
     if (!chatLog) return;
     chatLog.replaceChildren();
-    chatHistory.slice(-2).forEach((message) => {
+    const visibleMessages = chatHistory.slice(-2);
+    for (const message of visibleMessages) {
       const item = document.createElement("div");
       item.className = "chat-message " + message.who;
       item.textContent = message.text;
       chatLog.appendChild(item);
-    });
+    }
     chatLog.scrollTop = chatLog.scrollHeight;
   };
   const switchConversation = (id) => {
