@@ -37,3 +37,8 @@ Para executar localmente, com Node.js instalado:
 - `app.js` — interações de demonstração por texto, navegação e voz.
 
 O objetivo da próxima etapa é evoluir a interface e planejar uma conexão com IA que respeite os limites de custo e segurança.
+
+
+## Menu lateral (versão 0.2)
+
+O botão de três linhas abre o menu principal. Início, Nova conversa, Voz, Configurações e Ajuda têm ações implementadas. Histórico mostra as limitações do histórico local atual; Memória e Laboratório aparecem identificados como recursos planejados, sem fingir que já funcionam. O menu pode ser fechado pelo botão, pelo fundo escurecido ou pela tecla Escape.
