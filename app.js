@@ -6,6 +6,9 @@
   const hint = document.querySelector(".hint");
   const subtitle = document.querySelector(".subtitle");
   const voiceButton = document.querySelector('[aria-label="Áudio"]');
+  const coreWrap = document.querySelector("#atlas-core");
+  const wakeWordToggle = document.querySelector("#wake-word-toggle");
+  const permissionNote = document.querySelector("#voice-permission-note");
   const navButtons = [...document.querySelectorAll(".nav-button")];
 
   const showMessage = (message) => {
@@ -23,6 +26,9 @@
     const utterance = new SpeechSynthesisUtterance(message);
     utterance.lang = "pt-BR";
     utterance.rate = 1;
+    utterance.onstart = () => coreWrap?.classList.add("is-speaking");
+    utterance.onend = () => coreWrap?.classList.remove("is-speaking");
+    utterance.onerror = () => coreWrap?.classList.remove("is-speaking");
     window.speechSynthesis.speak(utterance);
   };
 
@@ -82,82 +88,208 @@
   });
 
   let activeRecognition = null;
+  let wakeWordActive = false;
+  let awaitingCommand = false;
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const setListeningState = (listening) => {
-    if (!voiceButton) return;
-    voiceButton.setAttribute("aria-pressed", String(listening));
-    voiceButton.setAttribute("aria-label", listening ? "Parar de ouvir" : "Áudio");
-    voiceButton.title = listening ? "Parar de ouvir" : "Falar com o ATLAS";
-    voiceButton.classList.toggle("voice-listening", listening);
+    if (voiceButton) {
+      voiceButton.setAttribute("aria-pressed", String(listening));
+      voiceButton.setAttribute("aria-label", listening ? "Parar de ouvir" : "Áudio");
+      voiceButton.title = listening ? "Parar de ouvir" : "Falar com o ATLAS";
+      voiceButton.classList.toggle("voice-listening", listening);
+    }
+    coreWrap?.classList.toggle("is-listening", listening);
+    if (wakeWordToggle) {
+      wakeWordToggle.setAttribute("aria-pressed", String(wakeWordActive));
+      wakeWordToggle.textContent = wakeWordActive ? "Desativar palavra-chave “Atlas”" : "Ativar palavra-chave “Atlas”";
+    }
   };
 
-  if (voiceButton) {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    voiceButton.setAttribute("aria-pressed", "false");
-    voiceButton.title = "Falar com o ATLAS";
-    voiceButton.addEventListener("click", () => {
-      if (activeRecognition) {
-        activeRecognition.stop();
-        showMessage("Parei de ouvir.");
-        if (status) status.textContent = "Microfone pausado";
-        return;
-      }
-      if (!Recognition) {
-        showMessage("Este navegador não oferece reconhecimento de voz. Tente usar um navegador compatível ou digite sua mensagem.");
-        if (status) status.textContent = "Reconhecimento de voz indisponível";
-        return;
-      }
-      if (!window.isSecureContext && location.hostname !== "localhost") {
-        showMessage("Para usar o microfone, abra o ATLAS por uma conexão segura (HTTPS).");
-        if (status) status.textContent = "Conexão segura necessária";
-        return;
-      }
-      const recognition = new Recognition();
-      activeRecognition = recognition;
-      recognition.lang = "pt-BR";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      setListeningState(true);
-      if (status) status.textContent = "Ouvindo…";
-      showMessage("Pode falar. Toque no microfone novamente para parar.");
-      recognition.onresult = (event) => {
-        const transcript = event.results?.[0]?.[0]?.transcript?.trim();
-        if (!transcript) {
-          showMessage("Não consegui entender. Tente falar novamente.");
-          return;
+  const normalizeVoiceText = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
+  const processVoiceCommand = async (transcript) => {
+    const command = transcript.trim();
+    if (!command) return;
+    if (chatInput) {
+      chatInput.value = command;
+      const answer = await sendDemoMessage(command);
+      if (answer) say(answer);
+    } else {
+      showMessage("Você: “" + command + "”");
+      respond(command);
+    }
+  };
+
+  const startRecognition = (forWakeWord = false) => {
+    if (!Recognition) {
+      showMessage("Este navegador não oferece reconhecimento de voz. Use um navegador compatível ou digite sua mensagem.");
+      if (status) status.textContent = "Reconhecimento de voz indisponível";
+      wakeWordActive = false;
+      setListeningState(false);
+      return;
+    }
+    if (!window.isSecureContext && location.hostname !== "localhost") {
+      showMessage("Para usar o microfone, abra o ATLAS por uma conexão segura (HTTPS).");
+      if (status) status.textContent = "Conexão segura necessária";
+      wakeWordActive = false;
+      setListeningState(false);
+      return;
+    }
+    const recognition = new Recognition();
+    activeRecognition = recognition;
+    recognition.lang = "pt-BR";
+    recognition.continuous = Boolean(forWakeWord);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setListeningState(true);
+    if (status) status.textContent = forWakeWord ? "Aguardando “Atlas”" : "Ouvindo…";
+    showMessage(forWakeWord
+      ? "Escuta ativada. Diga “Atlas” para chamar o assistente. Deixe esta página aberta e visível."
+      : "Pode falar. Toque no microfone novamente para parar.");
+
+    recognition.onresult = (event) => {
+      for (let index = event.resultIndex; index < event.results.length; index++) {
+        const result = event.results[index];
+        if (!result.isFinal) continue;
+        const transcript = result[0]?.transcript?.trim();
+        if (!transcript) continue;
+        if (!forWakeWord) {
+          processVoiceCommand(transcript);
+          continue;
         }
-        if (chatInput) {
-          chatInput.value = transcript;
-          sendDemoMessage(transcript).then((answer) => {
-            if (answer) say(answer);
-          });
+
+        const normalized = normalizeVoiceText(transcript);
+        if (awaitingCommand) {
+          awaitingCommand = false;
+          showMessage("Comando recebido.");
+          processVoiceCommand(transcript);
+          if (status) status.textContent = "Executando comando solicitado";
+          continue;
+        }
+
+        const wakeMatch = normalized.match(/(?:^|\s)atlas\b[\s,.:;!?-]*(.*)$/i);
+        if (!wakeMatch) continue;
+        const command = wakeMatch[1].trim();
+        if (command) {
+          processVoiceCommand(command);
         } else {
-          showMessage("Você: “" + transcript + "”");
-          respond(transcript);
+          awaitingCommand = true;
+          showMessage("Estou ouvindo. Diga seu comando agora.");
+          if (status) status.textContent = "Palavra-chave reconhecida";
+          say("Estou ouvindo.");
         }
-      };
-      recognition.onerror = (event) => {
-        const messages = {
-          "not-allowed": "O acesso ao microfone foi bloqueado. Permita o uso do microfone nas configurações do navegador.",
-          "no-speech": "Não detectei fala. Toque no microfone e tente novamente.",
-          "audio-capture": "Não encontrei um microfone disponível neste dispositivo."
-        };
-        if (status) status.textContent = "Não foi possível ouvir";
-        showMessage(messages[event.error] || "Não consegui captar sua voz. Confira o microfone e a permissão do navegador.");
-      };
-      recognition.onend = () => {
-        if (activeRecognition === recognition) activeRecognition = null;
-        setListeningState(false);
-        if (status && status.textContent === "Ouvindo…") status.textContent = "Pronto";
-      };
-      try {
-        recognition.start();
-      } catch (_) {
-        activeRecognition = null;
-        setListeningState(false);
-        showMessage("Não consegui iniciar o microfone. Aguarde um instante e tente novamente.");
       }
-    });
-  }
+    };
+    recognition.onerror = (event) => {
+      const messages = {
+        "not-allowed": "O acesso ao microfone foi negado. Autorize o microfone nas permissões do navegador.",
+        "no-speech": forWakeWord ? "Não detectei fala. A escuta por palavra-chave será retomada se o navegador permitir." : "Não detectei fala. Toque no microfone e tente novamente.",
+        "audio-capture": "Não encontrei um microfone disponível neste dispositivo."
+      };
+      if (status) status.textContent = "Não foi possível ouvir";
+      showMessage(messages[event.error] || "Não consegui captar sua voz. Confira o microfone e a permissão do navegador.");
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        wakeWordActive = false;
+        setListeningState(false);
+      }
+    };
+    recognition.onend = () => {
+      if (activeRecognition === recognition) activeRecognition = null;
+      setListeningState(false);
+      if (wakeWordActive && document.visibilityState === "visible") {
+        window.setTimeout(() => {
+          if (wakeWordActive && !activeRecognition && document.visibilityState === "visible") startRecognition(true);
+        }, 450);
+      } else if (wakeWordActive) {
+        wakeWordActive = false;
+        awaitingCommand = false;
+        if (status) status.textContent = "Escuta pausada";
+        showMessage("A escuta foi pausada porque a página ficou em segundo plano. Ative novamente quando voltar.");
+        setListeningState(false);
+      } else if (status && (status.textContent === "Ouvindo…" || status.textContent === "Aguardando “Atlas”")) {
+        status.textContent = "Pronto";
+      }
+    };
+    try {
+      recognition.start();
+    } catch (_) {
+      activeRecognition = null;
+      if (!forWakeWord) wakeWordActive = false;
+      setListeningState(false);
+      showMessage("Não consegui iniciar o microfone. Aguarde um instante e tente novamente.");
+    }
+  };
+
+  const stopListening = () => {
+    wakeWordActive = false;
+    awaitingCommand = false;
+    const recognition = activeRecognition;
+    activeRecognition = null;
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
+    }
+    setListeningState(false);
+    if (status) status.textContent = "Microfone pausado";
+    showMessage("Escuta desativada.");
+  };
+
+  const requestMicrophonePermission = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      showMessage("Este navegador não permite solicitar o microfone. Confira as permissões do site e tente novamente.");
+      return false;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (error) {
+      showMessage(error?.name === "NotAllowedError"
+        ? "Você não autorizou o microfone. Para ativar a voz, permita o acesso nas configurações do navegador."
+        : "Não consegui acessar o microfone. Confira se ele está disponível e tente novamente.");
+      return false;
+    }
+  };
+
+  wakeWordToggle?.addEventListener("click", async () => {
+    if (wakeWordActive || activeRecognition) {
+      stopListening();
+      if (permissionNote) permissionNote.textContent = "Escuta desativada. O microfone só volta a ser usado quando você ativar novamente.";
+      return;
+    }
+    if (!Recognition) {
+      showMessage("Este navegador não oferece reconhecimento de voz. Digite sua mensagem ou tente um navegador compatível.");
+      return;
+    }
+    if (permissionNote) permissionNote.textContent = "O navegador vai solicitar acesso ao microfone. Você pode negar ou desativar a escuta a qualquer momento.";
+    const granted = await requestMicrophonePermission();
+    if (!granted) return;
+    wakeWordActive = true;
+    awaitingCommand = false;
+    if (permissionNote) permissionNote.textContent = "Escuta por “Atlas” ativa enquanto esta página estiver aberta e visível. Não funciona com o navegador fechado ou o celular bloqueado.";
+    startRecognition(true);
+  });
+
+  voiceButton?.addEventListener("click", () => {
+    if (activeRecognition || wakeWordActive) {
+      stopListening();
+      return;
+    }
+    startRecognition(false);
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" && wakeWordActive) {
+      wakeWordActive = false;
+      awaitingCommand = false;
+      const recognition = activeRecognition;
+      activeRecognition = null;
+      if (recognition) {
+        try { recognition.stop(); } catch (_) {}
+      }
+      setListeningState(false);
+      if (status) status.textContent = "Escuta pausada";
+      showMessage("Por privacidade e pelas limitações do navegador, a escuta para quando a página fica em segundo plano.");
+    }
+  });
 
   const chatForm = document.querySelector("#chat-form");
   const chatInput = document.querySelector("#chat-input");
