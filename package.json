@@ -5,7 +5,8 @@
   "description": "Protótipo web do ATLAS",
   "scripts": {
     "test": "playwright test",
-    "test:syntax": "node --check app.js"
+    "test:syntax": "node --check app.js",
+    "start:api": "node server.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
