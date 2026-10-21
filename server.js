@@ -125,6 +125,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     const message = body.message.trim();
+    const wantsDetailedAnswer = /\b(detalhad[oa]s?|em detalhes|passo a passo|por etapas|explique melhor|análise|analise|compare|comparação|planeje|código|programação|programar|matemática|matematica|prova|demonstre)\b/i.test(message);
     if (message.length > MAX_MESSAGE_CHARS) {
       sendJson(res, 413, { error: "A mensagem deve ter até 4000 caracteres." }, origin);
       return;
@@ -154,12 +155,12 @@ const server = http.createServer(async (req, res) => {
           },
           body: JSON.stringify({
             systemInstruction: {
-              parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Seja direto e conciso por padrão, mas explique melhor quando a pergunta exigir." }]
+              parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Comece diretamente pela resposta, sem introdução desnecessária. Em perguntas simples, responda em 1 a 3 frases. Se a pergunta pedir detalhes, explique o suficiente e conclua a ideia; nunca pare no meio de uma frase." }]
             },
             contents: [{ role: "user", parts: [{ text: message }] }],
-            generationConfig: { maxOutputTokens: 450, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
           }),
-          signal: AbortSignal.timeout(30_000)
+          signal: AbortSignal.timeout(90_000)
         });
 
         if (!streamResponse.ok) {
@@ -237,9 +238,9 @@ const server = http.createServer(async (req, res) => {
             parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Seja direto e conciso por padrão, mas explique melhor quando a pergunta exigir." }]
           },
           contents: [{ role: "user", parts: [{ text: message }] }],
-          generationConfig: { maxOutputTokens: 450, temperature: 0.7 }
+          generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
         }),
-        signal: AbortSignal.timeout(30_000)
+        signal: AbortSignal.timeout(90_000)
       });
 
       if (!response.ok) {
