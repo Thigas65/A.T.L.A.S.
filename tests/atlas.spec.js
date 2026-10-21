@@ -52,3 +52,29 @@ test("mantém a navegação no celular e a oculta em telas grandes tipo TV", asy
   await expect(page.locator(".rail").first()).toBeHidden();
   await expect(page.getByRole("heading", { name: "ATLAS" })).toBeVisible();
 });
+
+test("abre e fecha o menu lateral pelo botão e pela tecla Escape", async ({ page }) => {
+  const menu = page.locator("#atlas-menu");
+  const toggle = page.locator("#menu-toggle");
+  await expect(menu).toHaveAttribute("aria-hidden", "true");
+  await expect(menu).toHaveAttribute("inert", "");
+  await toggle.click();
+  await expect(menu).toHaveAttribute("aria-hidden", "false");
+  await expect(menu).not.toHaveAttribute("inert", "");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveAttribute("aria-hidden", "true");
+  await expect(menu).toHaveAttribute("inert", "");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+});
+
+test("menu informa quais recursos ainda estão planejados", async ({ page }) => {
+  await page.locator("#menu-toggle").click();
+  await page.getByRole("button", { name: "Memória do ATLAS" }).click();
+  await expect(page.locator("#feature-heading")).toHaveText("Memória do ATLAS");
+  await expect(page.locator("#feature-state")).toContainText("AINDA DESATIVADO");
+  await page.locator("#menu-toggle").click();
+  await page.getByRole("button", { name: "Laboratório" }).click();
+  await expect(page.locator("#feature-heading")).toHaveText("Laboratório");
+  await expect(page.locator("#feature-state")).toContainText("AINDA DESATIVADO");
+});
