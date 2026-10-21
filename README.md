@@ -4,19 +4,32 @@ Protótipo web do **ATLAS**, um assistente virtual em desenvolvimento, com núcl
 
 ## Integração com Gemini
 
-O chat agora está preparado para enviar mensagens ao servidor local do ATLAS, que chama a API do Google Gemini. A chave da API fica **somente no servidor** e nunca deve ser colocada em `app.js`, `index.html` ou enviada em conversas.
+O chat usa uma função de servidor para chamar a API do Google Gemini. A chave da API deve ficar somente nas variáveis de ambiente do servidor; nunca a coloque em `app.js`, `index.html` ou em um arquivo versionado.
 
-### Configuração local
+### Publicar no Netlify
+
+O repositório inclui `netlify.toml` e a função `netlify/functions/chat.js`.
+
+1. Entre no Netlify e crie um site importando o repositório GitHub `Thigas65/A.T.L.A.S.`.
+2. Nas configurações do site, abra **Environment variables** e adicione `GEMINI_API_KEY` com a chave da API do Gemini. Não compartilhe a chave nem a coloque no código.
+3. Opcionalmente, defina `GEMINI_MODEL` como `gemini-2.5-flash` (esse é o padrão).
+4. Faça um novo deploy após salvar as variáveis.
+5. Abra o endereço público do site e teste o chat.
+
+A chave secreta de GitHub Actions não é transferida automaticamente ao Netlify. A variável `GEMINI_API_KEY` precisa ser cadastrada nas configurações do site hospedado. A função responde com erro claro se a variável estiver ausente.
+
+**Importante:** os arquivos e a configuração agora estão preparados para o Netlify, mas o site não é publicado automaticamente por este repositório. É necessário conectar o repositório à conta Netlify e configurar a variável de ambiente. Não foi feita uma chamada real à API nesta etapa, então a integração ainda precisa ser testada após o deploy.
+
+### Executar localmente
 
 Requer Node.js 20 ou superior.
 
-1. Configure a variável de ambiente `GEMINI_API_KEY` com a chave existente do Gemini. Não a coloque em arquivos versionados.
-2. Ative a integração com `ATLAS_AI_ENABLED=true`.
-3. Inicie o servidor da API com `npm run start:api`.
-4. Em outro terminal, inicie o site na porta esperada pelo servidor: `npx http-server . -p 4173 -s`.
-5. Abra `http://127.0.0.1:4173`.
+1. Configure as variáveis de ambiente `GEMINI_API_KEY` e `ATLAS_AI_ENABLED=true`.
+2. Inicie o servidor local com `npm run start:api`.
+3. Em outro terminal, inicie o site: `npx http-server . -p 4173 -s`.
+4. Abra `http://127.0.0.1:4173`.
 
-No macOS/Linux, as variáveis podem ser definidas na sessão do terminal antes de iniciar o servidor:
+No macOS/Linux, defina as variáveis na sessão do terminal antes de iniciar o servidor:
 
 ```sh
 export GEMINI_API_KEY="sua-chave"
@@ -24,13 +37,15 @@ export ATLAS_AI_ENABLED="true"
 npm run start:api
 ```
 
-No Windows PowerShell, use `$env:GEMINI_API_KEY="sua-chave"` e `$env:ATLAS_AI_ENABLED="true"` antes de `npm run start:api`.
+No Windows PowerShell:
 
-O servidor usa `gemini-2.5-flash` por padrão; é possível alterar o modelo pela variável `GEMINI_MODEL`. A IA permanece desativada por padrão, mesmo que a chave esteja configurada: é necessário ativar explicitamente `ATLAS_AI_ENABLED=true`.
+```powershell
+$env:GEMINI_API_KEY="sua-chave"
+$env:ATLAS_AI_ENABLED="true"
+npm run start:api
+```
 
-O servidor limita solicitações por endereço e tamanho de mensagem, restringe a origem padrão a `http://127.0.0.1:4173) e não registra mensagens nem chaves. Não exponha esse servidor diretamente à internet. Para hospedar publicamente, configure um backend protegido e ajuste a origem permitida para o domínio real do ATLAS. A configuração local com `127.0.0.1` não é, sozinha, uma implantação pública.
-
-A API gratuita do Gemini tem limites e condições próprias. O código não garante uso ilimitado nem impede que o provedor aplique limites ou altere a disponibilidade.
+O servidor local usa `gemini-2.5-flash` por padrão. A IA permanece desativada por padrão no servidor local, mesmo que a chave esteja configurada: é necessário definir `ATLAS_AI_ENABLED=true`.
 
 ## Interface e recursos
 
@@ -54,6 +69,8 @@ Os testes de interface simulam a resposta da API para não consumir a cota real 
 ## Arquivos principais
 
 - `index.html` — estrutura e estilos.
-- `app.js` — interação da interface e envio de mensagens ao backend.
-- `server.js` — ponte protegida para a API do Gemini.
+- `app.js` — interação da interface e envio de mensagens à API.
+- `server.js` — ponte local para a API do Gemini.
+- `netlify/functions/chat.js` — ponte do chat para o Gemini no Netlify.
+- `netlify.toml` — configuração de publicação e funções do Netlify.
 - `tests/atlas.spec.js` — testes de navegador.
