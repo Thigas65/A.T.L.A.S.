@@ -14,7 +14,11 @@ const ROOT = __dirname;
 const STATIC_FILES = {
   "/": { file: "index.html", type: "text/html; charset=utf-8" },
   "/index.html": { file: "index.html", type: "text/html; charset=utf-8" },
-  "/app.js": { file: "app.js", type: "text/javascript; charset=utf-8" }
+  "/app.js": { file: "app.js", type: "text/javascript; charset=utf-8" },
+  "/manifest.webmanifest": { file: "manifest.webmanifest", type: "application/manifest+json; charset=utf-8" },
+  "/service-worker.js": { file: "service-worker.js", type: "text/javascript; charset=utf-8" },
+  "/icons/atlas-192.svg": { file: "icons/atlas-192.svg", type: "image/svg+xml" },
+  "/icons/atlas-512.svg": { file: "icons/atlas-512.svg", type: "image/svg+xml" }
 };
 
 function isSameOrigin(origin, req) {
@@ -70,7 +74,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if ((pathname === "/" || pathname === "/index.html" || pathname === "/app.js") && (req.method === "GET" || req.method === "HEAD")) {
+  if (Object.prototype.hasOwnProperty.call(STATIC_FILES, pathname) && (req.method === "GET" || req.method === "HEAD")) {
     const asset = STATIC_FILES[pathname];
     try {
       const content = fs.readFileSync(path.join(ROOT, asset.file));
