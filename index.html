@@ -96,6 +96,31 @@
     .app.settings-mode .settings-panel, .app.help-mode .settings-panel { display: block; }
     .app.help-mode .settings-panel { border-color: rgba(70, 231, 255, .25); }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    .menu-toggle { position: fixed; z-index: 30; top: 18px; left: 18px; width: 46px; height: 46px; border-radius: 14px; border: 1px solid rgba(112,195,255,.28); background: rgba(7,19,38,.92); color: var(--cyan); display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,.22); }
+    .menu-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+    .menu-backdrop { position: fixed; inset: 0; z-index: 39; background: rgba(0,5,15,.62); backdrop-filter: blur(5px); opacity: 0; visibility: hidden; transition: opacity .22s, visibility .22s; }
+    .side-menu { position: fixed; z-index: 40; inset: 0 auto 0 0; width: min(330px, 88vw); padding: 24px 18px; background: linear-gradient(165deg, rgba(9,25,49,.99), rgba(3,10,24,.99)); border-right: 1px solid rgba(70,231,255,.24); box-shadow: 20px 0 70px rgba(0,0,0,.38); transform: translateX(-105%); transition: transform .24s ease; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    .menu-open .menu-backdrop { opacity: 1; visibility: visible; }
+    .menu-open .side-menu { transform: translateX(0); }
+    .menu-brand { display:flex; align-items:center; gap:12px; padding: 4px 4px 20px; border-bottom:1px solid rgba(112,195,255,.15); margin-bottom: 8px; }
+    .menu-brand-core { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; color:#eaffff; font-size:22px; background:radial-gradient(circle at 35% 25%,#7ff4ff,#1686df 48%,#071a45 80%); border:1px solid rgba(138,245,255,.8); box-shadow:0 0 24px rgba(36,193,255,.35); }
+    .menu-brand strong { display:block; letter-spacing:.22em; font-size:17px; }
+    .menu-brand small { display:block; color:var(--muted); margin-top:4px; font-size:11px; }
+    .menu-section-label { margin: 12px 10px 5px; color:#6586a9; font-size:10px; letter-spacing:.18em; text-transform:uppercase; }
+    .menu-item { display:flex; align-items:center; gap:13px; width:100%; min-height:46px; padding:11px 12px; text-align:left; border:1px solid transparent; border-radius:12px; background:transparent; color:#c6ddf5; font:inherit; font-size:13px; cursor:pointer; }
+    .menu-item:hover, .menu-item:focus-visible, .menu-item[aria-current="page"] { outline:none; border-color:rgba(70,231,255,.22); background:rgba(36,123,255,.13); color:#fff; }
+    .menu-item svg { flex:0 0 19px; width:19px; height:19px; fill:none; stroke:var(--cyan); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+    .menu-footer { margin-top:auto; padding:14px 10px 4px; border-top:1px solid rgba(112,195,255,.14); color:#6586a9; font-size:10px; line-height:1.6; }
+    .feature-placeholder { display:none; width:min(520px,92vw); padding:20px; text-align:left; border:1px solid rgba(112,195,255,.2); border-radius:16px; background:rgba(7,19,38,.82); }
+    .feature-placeholder h2 { margin:0 0 10px; font-size:18px; }
+    .feature-placeholder p { color:var(--muted); font-size:13px; line-height:1.7; }
+    .feature-placeholder .feature-state { color:var(--cyan); font-size:11px; letter-spacing:.08em; }
+    .app.feature-mode .eyebrow, .app.feature-mode .core-wrap, .app.feature-mode main > h1, .app.feature-mode .subtitle, .app.feature-mode .status, .app.feature-mode .hint, .app.feature-mode .chat-panel { display:none; }
+    .app.feature-mode main { justify-content:flex-start; padding-top:clamp(24px,7vh,64px); }
+    .app.feature-mode .view-title, .app.feature-mode .feature-placeholder { display:block; }
+    @media (max-width:600px) { .menu-toggle { top:12px; left:12px; width:42px; height:42px; } .side-menu { padding-top:18px; } }
+
     @keyframes rotate { to { transform: rotate(360deg); } }
     @media (max-width: 600px) {
       .app { grid-template-columns: 54px 1fr 54px; }
@@ -119,6 +144,23 @@
   </style>
 </head>
 <body>
+  <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu ATLAS" aria-expanded="false" aria-controls="atlas-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div class="menu-backdrop" id="menu-backdrop" aria-hidden="true"></div>
+  <aside class="side-menu" id="atlas-menu" aria-label="Menu do ATLAS" aria-hidden="true">
+    <div class="menu-brand"><div class="menu-brand-core" aria-hidden="true">A</div><div><strong>ATLAS</strong><small>Seu assistente. Seu universo.</small></div></div>
+    <div class="menu-section-label">Principal</div>
+    <button class="menu-item" type="button" data-menu-action="home" aria-current="page"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v11h14V9M9 20v-7h6v7"/></svg>Início</button>
+    <button class="menu-item" type="button" data-menu-action="new-chat"><svg viewBox="0 0 24 24"><path d="M12 20H5l-2 2v-6a9 9 0 1 1 4 7"/><path d="M12 8v8M8 12h8"/></svg>Nova conversa</button>
+    <button class="menu-item" type="button" data-menu-action="history"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>Histórico</button>
+    <div class="menu-section-label">Experiência</div>
+    <button class="menu-item" type="button" data-menu-action="voice"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>Voz</button>
+    <button class="menu-item" type="button" data-menu-action="memory"><svg viewBox="0 0 24 24"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 3 3 3 0 0 0 2 3v2a3 3 0 0 0 3 3M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 3 3 3 0 0 1-2 3v2a3 3 0 0 1-3 3M9 7h6M9 12h6M9 17h6"/></svg>Memória do ATLAS</button>
+    <button class="menu-item" type="button" data-menu-action="lab"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 15h8"/></svg>Laboratório</button>
+    <div class="menu-section-label">Sistema</div>
+    <button class="menu-item" type="button" data-menu-action="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19 13 2 1-2 4-2-1-2 1v2h-5v-2l-2-1-2 1-2-4 2-1v-2l-2-1 2-4 2 1 2-1V4h5v2l2 1 2-1 2 4-2 1z"/></svg>Configurações</button>
+    <button class="menu-item" type="button" data-menu-action="help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-1.2 1-1.7 1.4-1.7 3M12 17h.01"/></svg>Ajuda e sobre</button>
+    <div class="menu-footer">ATLAS · versão 0.2<br>Protótipo em desenvolvimento. Recursos de IA e memória ainda não conectados.</div>
+  </aside>
   <div class="app">
     <nav class="rail" aria-label="Navegação principal">
       <button class="nav-button" aria-label="Início" title="Início"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-7h6v7"/></svg></button>
@@ -152,6 +194,7 @@
         </form>
         <p class="chat-note">Modo de demonstração · sem conexão com IA</p>
       </section>
+      <section class="feature-placeholder" id="feature-placeholder" aria-live="polite"><h2 id="feature-heading">Memória do ATLAS</h2><p id="feature-description"></p><div class="feature-state" id="feature-state">RECURSO PLANEJADO</div></section>
       <section class="settings-panel" id="settings-panel" aria-label="Painel de informações">
         <h2 id="panel-heading">Configurações</h2>
         <p id="panel-description">Personalize as opções disponíveis nesta versão de demonstração.</p>
