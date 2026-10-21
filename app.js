@@ -409,6 +409,7 @@
             .join("\n");
           handleEvent(data);
         }
+        if (!finished) throw new Error("A transmissão foi encerrada antes de terminar.");
       }
 
       if (!streamedAnswer.trim()) throw new Error("O Gemini não retornou texto nesta resposta.");
