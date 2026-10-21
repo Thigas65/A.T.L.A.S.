@@ -126,6 +126,92 @@
   const chatLog = document.querySelector("#chat-log");
   const clearChatButton = document.querySelector("#clear-chat");
   const voiceEnabled = document.querySelector("#voice-enabled");
+
+  const menuToggle = document.querySelector("#menu-toggle");
+  const menuBackdrop = document.querySelector("#menu-backdrop");
+  const sideMenu = document.querySelector("#atlas-menu");
+  const featurePanel = document.querySelector("#feature-placeholder");
+  const featureHeading = document.querySelector("#feature-heading");
+  const featureDescription = document.querySelector("#feature-description");
+  const featureState = document.querySelector("#feature-state");
+  const setMenuOpen = (open) => {
+    document.body.classList.toggle("menu-open", open);
+    if (menuToggle) {
+      menuToggle.setAttribute("aria-expanded", String(open));
+      menuToggle.setAttribute("aria-label", open ? "Fechar menu ATLAS" : "Abrir menu ATLAS");
+    }
+    if (sideMenu) sideMenu.setAttribute("aria-hidden", String(!open));
+    if (open) sideMenu?.querySelector("button")?.focus();
+    else menuToggle?.focus();
+  };
+  menuToggle?.addEventListener("click", () => setMenuOpen(menuToggle.getAttribute("aria-expanded") !== "true"));
+  menuBackdrop?.addEventListener("click", () => setMenuOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("menu-open")) setMenuOpen(false);
+  });
+  const featureCopy = {
+    history: ["Histórico", "As conversas ficam guardadas apenas neste navegador neste protótipo. A lista completa de conversas e a pesquisa ainda serão implementadas.", "HISTÓRICO SIMPLES DISPONÍVEL NO CHAT"],
+    memory: ["Memória do ATLAS", "A memória permitirá guardar preferências escolhidas por você, consultar o que foi salvo e apagar tudo quando quiser. Ela ainda não está ativa e nada está sendo memorizado além do histórico local do chat.", "RECURSO PLANEJADO · AINDA DESATIVADO"],
+    lab: ["Laboratório", "Um espaço futuro para experimentar ferramentas, integrações e novas capacidades do ATLAS. Vamos ativar cada ferramenta apenas quando estiver implementada e testada.", "RECURSO PLANEJADO · AINDA DESATIVADO"]
+  };
+  document.querySelectorAll("[data-menu-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.menuAction;
+      setMenuOpen(false);
+      document.querySelectorAll("[data-menu-action]").forEach((item) => item.removeAttribute("aria-current"));
+      button.setAttribute("aria-current", "page");
+      const app = document.querySelector(".app");
+      app.classList.remove("chat-mode", "settings-mode", "help-mode", "feature-mode");
+      if (action === "home") {
+        showMessage("Você está na tela inicial do ATLAS.");
+        if (status) status.textContent = "Sistema visual inicializado";
+      } else if (action === "new-chat") {
+        if (chatHistory.length) {
+          chatHistory = [];
+          renderChatHistory();
+          try { localStorage.removeItem(historyKey); } catch (_) {}
+        }
+        app.classList.add("chat-mode");
+        document.querySelector("#view-title").textContent = "Nova conversa";
+        showMessage("Nova conversa iniciada.");
+        chatInput?.focus();
+      } else if (action === "history") {
+        app.classList.add("feature-mode");
+        document.querySelector("#view-title").textContent = "Histórico";
+        featureHeading.textContent = featureCopy.history[0];
+        featureDescription.textContent = featureCopy.history[1];
+        featureState.textContent = featureCopy.history[2];
+      } else if (action === "voice") {
+        app.classList.add("settings-mode");
+        document.querySelector("#view-title").textContent = "Voz";
+        document.querySelector("#panel-heading").textContent = "Configurações de voz";
+        document.querySelector("#panel-description").textContent = "Ative ou desative as respostas faladas. Para falar com o ATLAS, use o botão de microfone e permita o acesso quando solicitado.";
+        document.querySelector("#panel-footnote").textContent = "O reconhecimento depende do navegador. As respostas ainda são demonstrativas.";
+        document.querySelector("#voice-setting-row").style.display = "flex";
+      } else if (action === "settings") {
+        app.classList.add("settings-mode");
+        document.querySelector("#view-title").textContent = "Configurações";
+        document.querySelector("#panel-heading").textContent = "Configurações";
+        document.querySelector("#panel-description").textContent = "Personalize as opções disponíveis nesta versão de demonstração.";
+        document.querySelector("#panel-footnote").textContent = "As opções são locais neste protótipo. Ainda não existe conexão com uma IA.";
+        document.querySelector("#voice-setting-row").style.display = "flex";
+      } else if (action === "help") {
+        app.classList.add("help-mode");
+        document.querySelector("#view-title").textContent = "Ajuda e sobre";
+        document.querySelector("#panel-heading").textContent = "Como testar o ATLAS";
+        document.querySelector("#panel-description").textContent = "Digite uma mensagem na área Conversas. O microfone tenta reconhecer sua fala se o navegador suportar e você autorizar o acesso.";
+        document.querySelector("#panel-footnote").textContent = "Versão 0.2 · respostas pré-programadas · IA real ainda não conectada.";
+        document.querySelector("#voice-setting-row").style.display = "none";
+      } else if (featureCopy[action]) {
+        app.classList.add("feature-mode");
+        document.querySelector("#view-title").textContent = featureCopy[action][0];
+        featureHeading.textContent = featureCopy[action][0];
+        featureDescription.textContent = featureCopy[action][1];
+        featureState.textContent = featureCopy[action][2];
+      }
+    });
+  });
+
   const voicePreferenceKey = "atlas-demo-voice-enabled";
   try {
     const savedVoicePreference = window.localStorage.getItem(voicePreferenceKey);
