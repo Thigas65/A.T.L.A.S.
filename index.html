@@ -79,6 +79,22 @@
     .chat-form button:hover { filter: brightness(1.12); }
     .chat-form button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .chat-note { margin: 7px 0 0; color: #587492; font-size: 10px; }
+    .view-title { display: none; margin: 0 0 16px; font-size: clamp(24px, 4vw, 34px); letter-spacing: .08em; }
+    .settings-panel { display: none; width: min(520px, 92vw); text-align: left; margin-top: 18px; padding: 18px; border: 1px solid rgba(112, 195, 255, .2); border-radius: 16px; background: rgba(7, 19, 38, .82); }
+    .settings-panel h2 { margin: 0 0 8px; font-size: 17px; }
+    .settings-panel p { color: #9bb2cf; font-size: 12px; line-height: 1.6; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(112, 195, 255, .13); font-size: 13px; }
+    .setting-row input { accent-color: var(--cyan); width: 18px; height: 18px; }
+    .app.chat-mode main, .app.settings-mode main, .app.help-mode main { justify-content: flex-start; padding-top: clamp(24px, 7vh, 64px); }
+    .app.chat-mode .eyebrow, .app.chat-mode .core-wrap, .app.chat-mode main > h1, .app.chat-mode .subtitle, .app.chat-mode .status, .app.chat-mode .hint,
+    .app.settings-mode .eyebrow, .app.settings-mode .core-wrap, .app.settings-mode main > h1, .app.settings-mode .subtitle, .app.settings-mode .status, .app.settings-mode .hint,
+    .app.help-mode .eyebrow, .app.help-mode .core-wrap, .app.help-mode main > h1, .app.help-mode .subtitle, .app.help-mode .status, .app.help-mode .hint { display: none; }
+    .app.chat-mode .view-title, .app.settings-mode .view-title, .app.help-mode .view-title { display: block; }
+    .app.chat-mode .chat-panel { width: min(760px, 92vw); margin-top: 0; }
+    .app.chat-mode .chat-log { max-height: 52vh; min-height: 160px; }
+    .app.settings-mode .chat-panel, .app.help-mode .chat-panel { display: none; }
+    .app.settings-mode .settings-panel, .app.help-mode .settings-panel { display: block; }
+    .app.help-mode .settings-panel { border-color: rgba(70, 231, 255, .25); }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @keyframes rotate { to { transform: rotate(360deg); } }
     @media (max-width: 600px) {
@@ -110,6 +126,7 @@
       <button class="nav-button" aria-label="Configurações" title="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)"/></svg></button>
     </nav>
     <main>
+      <h2 class="view-title" id="view-title">Conversas</h2>
       <div class="eyebrow">Sistema de assistência inteligente</div>
       <div class="core-wrap" aria-label="Núcleo visual ATLAS">
         <div class="orbit"></div>
@@ -134,6 +151,15 @@
           </button>
         </form>
         <p class="chat-note">Modo de demonstração · sem conexão com IA</p>
+      </section>
+      <section class="settings-panel" id="settings-panel" aria-label="Painel de informações">
+        <h2 id="panel-heading">Configurações</h2>
+        <p id="panel-description">Personalize as opções disponíveis nesta versão de demonstração.</p>
+        <label class="setting-row" id="voice-setting-row">
+          <span>Resposta falada pelo navegador</span>
+          <input type="checkbox" id="voice-enabled" checked>
+        </label>
+        <p id="panel-footnote">As opções são locais neste protótipo. Ainda não existe conexão com uma IA.</p>
       </section>
     </main>
     <nav class="rail right" aria-label="Ferramentas">
