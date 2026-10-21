@@ -13,6 +13,8 @@
   };
 
   const say = (message) => {
+    const voiceSetting = document.querySelector("#voice-enabled");
+    if (voiceSetting && !voiceSetting.checked) return;
     if (!("speechSynthesis" in window)) {
       showMessage("A fala não é compatível com este navegador.");
       return;
@@ -45,14 +47,37 @@
     if (button === voiceButton) return;
     button.addEventListener("click", () => {
       const label = button.getAttribute("aria-label");
-      const messages = {
-        "Início": "Você está na tela inicial do ATLAS.",
-        "Conversas": "A área de conversas será construída na próxima etapa.",
-        "Configurações": "As configurações ainda estão em desenvolvimento.",
-        "Ajuda": "ATLAS 0.1: use o botão de áudio para testar a voz, se seu navegador for compatível."
-      };
-      showMessage(messages[label] || "Esta função será adicionada em breve.");
-      if (status) status.textContent = label + " selecionado";
+      const app = document.querySelector(".app");
+      const title = document.querySelector("#view-title");
+      const panelHeading = document.querySelector("#panel-heading");
+      const panelDescription = document.querySelector("#panel-description");
+      const footnote = document.querySelector("#panel-footnote");
+      app.classList.remove("chat-mode", "settings-mode", "help-mode");
+      if (label === "Conversas") {
+        app.classList.add("chat-mode");
+        if (title) title.textContent = "Conversas";
+        showMessage("Esta é a área de conversa do protótipo.");
+        if (chatInput) chatInput.focus();
+      } else if (label === "Configurações") {
+        app.classList.add("settings-mode");
+        if (title) title.textContent = "Configurações";
+        if (panelHeading) panelHeading.textContent = "Configurações";
+        if (panelDescription) panelDescription.textContent = "Escolha se o ATLAS deve falar as respostas usando a voz do navegador.";
+        if (footnote) footnote.textContent = "Essa preferência vale neste navegador. O protótipo não envia áudio ou mensagens a um servidor de IA.";
+        showMessage("Configurações da demonstração.");
+      } else if (label === "Ajuda") {
+        app.classList.add("help-mode");
+        if (title) title.textContent = "Ajuda";
+        if (panelHeading) panelHeading.textContent = "Como testar o ATLAS";
+        if (panelDescription) panelDescription.textContent = "Digite uma mensagem na área Conversas. O microfone tenta reconhecer sua fala, se o navegador suportar e você autorizar o acesso.";
+        if (footnote) footnote.textContent = "As respostas são pré-programadas. O ATLAS ainda não está conectado a uma inteligência artificial real.";
+        showMessage("Ajuda do ATLAS.");
+      } else {
+        if (title) title.textContent = "";
+        showMessage("Você está na tela inicial do ATLAS.");
+        if (status) status.textContent = "Sistema visual inicializado";
+      }
+      if (label !== "Início" && status) status.textContent = label + " selecionado";
     });
   });
 
@@ -100,6 +125,18 @@
   const chatInput = document.querySelector("#chat-input");
   const chatLog = document.querySelector("#chat-log");
   const clearChatButton = document.querySelector("#clear-chat");
+  const voiceEnabled = document.querySelector("#voice-enabled");
+  const voicePreferenceKey = "atlas-demo-voice-enabled";
+  try {
+    const savedVoicePreference = window.localStorage.getItem(voicePreferenceKey);
+    if (voiceEnabled && savedVoicePreference !== null) voiceEnabled.checked = savedVoicePreference === "true";
+  } catch (_) {}
+  if (voiceEnabled) {
+    voiceEnabled.addEventListener("change", () => {
+      try { window.localStorage.setItem(voicePreferenceKey, String(voiceEnabled.checked)); } catch (_) {}
+      showMessage(voiceEnabled.checked ? "Respostas faladas ativadas." : "Respostas faladas desativadas.");
+    });
+  }
   const historyKey = "atlas-demo-chat-v1";
   let chatHistory = [];
 
