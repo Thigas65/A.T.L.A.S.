@@ -374,11 +374,15 @@
           try {
             const event = JSON.parse(eventText);
             if (typeof event.text === "string") {
+              const isFirstChunk = streamedAnswer.length === 0;
+              const shouldFollow = chatLog && (chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 80);
               streamedAnswer += event.text;
-              if (liveMessage) liveMessage.textContent = streamedAnswer;
-              if (chatLog) chatLog.scrollTop = chatLog.scrollHeight;
-              showMessage("O ATLAS está escrevendo…");
-              if (status) status.textContent = "Gerando resposta";
+              if (liveMessage) liveMessage.textContent += event.text;
+              if (chatLog && shouldFollow) chatLog.scrollTop = chatLog.scrollHeight;
+              if (isFirstChunk) {
+                showMessage("O ATLAS está escrevendo…");
+                if (status) status.textContent = "Gerando resposta";
+              }
             }
             if (event.error) throw new Error(event.error);
             if (event.done) finished = true;
