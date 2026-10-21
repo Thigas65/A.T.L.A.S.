@@ -1,12 +1,21 @@
 const { test, expect } = require("@playwright/test");
 
-test.beforeEach(async ({ page }) => { await page.goto("/"); });
+test.beforeEach(async ({ page }) => {
+  await page.route("http://127.0.0.1:8787/api/chat", async (route) => {
+    const body = route.request().postDataJSON();
+    const answer = /oi/i.test(body.message)
+      ? "Olá! Sou o ATLAS. Resposta simulada pelo teste."
+      : "Resposta simulada do Gemini para: " + body.message;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ answer }) });
+  });
+  await page.goto("/");
+});
 
 test("carrega a tela inicial do ATLAS", async ({ page }) => {
   await expect(page).toHaveTitle(/ATLAS/);
   await expect(page.getByRole("heading", { name: "ATLAS" })).toBeVisible();
   await expect(page.locator("#chat-input")).toBeVisible();
-  await expect(page.locator(".chat-note")).toContainText("sem conexão com IA");
+  await expect(page.locator(".chat-note")).toContainText("Gemini");
 });
 
 test("abre Conversas e envia uma mensagem de demonstração", async ({ page }) => {
@@ -15,7 +24,7 @@ test("abre Conversas e envia uma mensagem de demonstração", async ({ page }) =
   await page.locator("#chat-input").fill("Oi ATLAS");
   await page.locator("#chat-input").press("Enter");
   await expect(page.locator(".chat-message.user")).toContainText("Oi ATLAS");
-  await expect(page.locator(".chat-message.atlas").last()).toContainText("Olá! Sou o ATLAS");
+  await expect(page.locator(".chat-message.atlas").last()).toContainText("Resposta simulada pelo teste");
 });
 
 test("limpa o histórico de conversa", async ({ page }) => {
@@ -42,7 +51,7 @@ test("abre a tela de Ajuda", async ({ page }) => {
   await page.getByRole("button", { name: "Ajuda" }).click();
   await expect(page.locator(".app")).toHaveClass(/help-mode/);
   await expect(page.locator("#panel-heading")).toHaveText("Como testar o ATLAS");
-  await expect(page.locator("#panel-footnote")).toContainText("não está conectado a uma inteligência artificial");
+  await expect(page.locator("#panel-footnote")).toContainText("Gemini");
 });
 
 test("mantém a navegação no celular e a oculta em telas grandes tipo TV", async ({ page }) => {
