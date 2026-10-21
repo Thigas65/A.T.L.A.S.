@@ -91,6 +91,54 @@
     });
   }
 
+  const chatForm = document.querySelector("#chat-form");
+  const chatInput = document.querySelector("#chat-input");
+  const chatLog = document.querySelector("#chat-log");
+
+  const addChatMessage = (text, who) => {
+    if (!chatLog) return;
+    const item = document.createElement("div");
+    item.className = "chat-message " + who;
+    item.textContent = text;
+    chatLog.appendChild(item);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  };
+
+  if (chatForm && chatInput) {
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) {
+        chatInput.focus();
+        return;
+      }
+      addChatMessage(message, "user");
+      chatInput.value = "";
+      const answer = getDemoAnswer(message);
+      addChatMessage(answer, "atlas");
+      showMessage("Mensagem recebida · modo de demonstração");
+      if (status) status.textContent = "Conversa de demonstração";
+      chatInput.focus();
+    });
+  }
+
+  function getDemoAnswer(text) {
+    const query = text.toLocaleLowerCase("pt-BR");
+    if (query.includes("seu nome") || query.includes("quem é você") || query.includes("quem e voce")) {
+      return "Eu sou o ATLAS, seu assistente virtual. Esta versão ainda é um protótipo e não está conectada a uma IA.";
+    }
+    if (query.includes("olá") || query.includes("ola") || query === "oi" || query.startsWith("oi ")) {
+      return "Olá! Sou o ATLAS. Já consigo receber mensagens nesta demonstração; a inteligência artificial será conectada em uma próxima etapa.";
+    }
+    if (query.includes("ajuda") || query.includes("o que você faz") || query.includes("o que voce faz")) {
+      return "Por enquanto, você pode testar esta conversa e o botão de áudio. Minhas respostas são de demonstração, não respostas de uma IA real.";
+    }
+    if (query.includes("atlas")) {
+      return "Estou aqui! O núcleo visual e esta interface são a primeira base do projeto ATLAS.";
+    }
+    return "Recebi sua mensagem: “" + text + "”. Ainda não estou conectado a uma IA, então não consigo responder de forma inteligente de verdade. Essa será uma das próximas etapas.";
+  }
+
   if (subtitle) {
     subtitle.setAttribute("aria-live", "polite");
   }
