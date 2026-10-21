@@ -203,12 +203,11 @@
     .rail-status small { display:block; margin-top:5px; font-size:11px; color:#9bc7e7; }
     main { position:relative; overflow:visible; padding:0 10px 0; justify-content:center; min-width:0; }
     .eyebrow, main > h1, .subtitle, .status, .hint { display:none; }
-    .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; }
+    .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; transform:translateY(-9vh); }
     .orbit { inset:2%; border:2px solid rgba(0,225,255,.9); box-shadow:0 0 12px rgba(0,205,255,.5), 0 0 30px rgba(0,119,255,.36), inset 0 0 12px rgba(0,190,255,.22); }
     .orbit::before, .orbit::after { width:8px; height:8px; background:#d9fcff; box-shadow:0 0 10px #00eaff, 0 0 24px #008cff, 0 0 36px rgba(0,140,255,.7); }
     .orbit.two { inset:7%; border:2px solid rgba(0,145,255,.92); box-shadow:0 0 14px rgba(0,111,255,.52), inset 0 0 14px rgba(0,111,255,.22); }
-    .core-wrap::before, .core-wrap::after { content:""; position:absolute; inset:12% -5%; border:2px solid rgba(0,224,255,.92); border-radius:50%; transform:rotate(-24deg); box-shadow:0 0 12px rgba(0,210,255,.58), 0 0 28px rgba(0,155,255,.34), inset 0 0 10px rgba(0,155,255,.2); }
-    .core-wrap::after { inset:17% -7%; transform:rotate(29deg); border-color:rgba(0,151,255,.9); box-shadow:0 0 14px rgba(0,145,255,.62), 0 0 30px rgba(0,95,255,.36); }
+    /* Removidas as órbitas ovais externas: manter apenas os círculos do núcleo. */
     .core { width:auto; height:auto; aspect-ratio:auto; border:0; border-radius:0; background:transparent; box-shadow:none; z-index:1; }
     .core::before { display:none; }
     .core-mark { color:#f0fbff; font-size:clamp(32px,3.1vw,52px); font-weight:400; letter-spacing:0; padding-left:0; text-shadow:0 0 12px #1cbdff,0 0 30px #0878ff; filter:drop-shadow(0 0 10px rgba(0,220,255,.75)); }
@@ -310,7 +309,7 @@
     }
     body.tv-mode .core-wrap {
       width: min(52vh, 52vw, 680px); height: min(52vh, 52vw, 680px);
-      margin: 1vh auto 0; flex: 0 0 auto;
+      margin: -2vh auto 0; flex: 0 0 auto;
     }
     body.tv-mode .core { width: 47%; height: 47%; }
     body.tv-mode .status {
