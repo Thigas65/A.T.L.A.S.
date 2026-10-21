@@ -144,6 +144,79 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+      if (body.stream === true) {
+        const streamResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": apiKey,
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream"
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Seja direto e conciso por padrão, mas explique melhor quando a pergunta exigir." }]
+            },
+            contents: [{ role: "user", parts: [{ text: message }] }],
+            generationConfig: { maxOutputTokens: 450, temperature: 0.7 }
+          }),
+          signal: AbortSignal.timeout(30_000)
+        });
+
+        if (!streamResponse.ok) {
+          let providerMessage = "sem detalhe";
+          try {
+            const providerBody = await streamResponse.clone().json();
+            if (typeof providerBody?.error?.message === "string") providerMessage = providerBody.error.message.slice(0, 300);
+          } catch {}
+          console.warn("ATLAS Gemini streaming HTTP status:", streamResponse.status, "| provider:", providerMessage);
+          const errorMessage = streamResponse.status === 429
+            ? "O Gemini atingiu o limite de uso ou a cota disponível. Tente novamente mais tarde."
+            : streamResponse.status === 401 || streamResponse.status === 403
+              ? "A chave do Gemini foi recusada. Confira a configuração da API no Render."
+              : "Não foi possível iniciar a resposta em tempo real do Gemini. Tente novamente.";
+          sendJson(res, streamResponse.status === 429 ? 429 : 502, { error: errorMessage }, origin);
+          return;
+        }
+
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "Connection": "keep-alive",
+          "X-Accel-Buffering": "no",
+          "X-Content-Type-Options": "nosniff"
+        });
+        res.flushHeaders?.();
+        const decoder = new TextDecoder();
+        let pending = "";
+        const emitGeminiEvent = (eventText) => {
+          if (!eventText || eventText === "[DONE]") return;
+          try {
+            const chunk = JSON.parse(eventText);
+            const text = (chunk.candidates?.[0]?.content?.parts || [])
+              .filter((part) => typeof part.text === "string")
+              .map((part) => part.text)
+              .join("");
+            if (text && !res.destroyed) res.write("data: " + JSON.stringify({ text }) + "\n\n");
+          } catch {}
+        };
+
+        for await (const bytes of streamResponse.body) {
+          pending += decoder.decode(bytes, { stream: true });
+          const lines = pending.split(/\r?\n/);
+          pending = lines.pop() || "";
+          for (const line of lines) {
+            if (line.startsWith("data:")) emitGeminiEvent(line.slice(5).trim());
+          }
+        }
+        pending += decoder.decode();
+        if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
+        if (!res.destroyed) {
+          res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
+          res.end();
+        }
+        return;
+      }
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
         headers: {
@@ -161,7 +234,6 @@ const server = http.createServer(async (req, res) => {
       });
 
       if (!response.ok) {
-        // Log the HTTP status and a short provider error explanation; never log the API key.
         let providerMessage = "sem detalhe";
         try {
           const providerBody = await response.clone().json();
