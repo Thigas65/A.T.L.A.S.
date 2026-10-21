@@ -73,8 +73,12 @@
       showMessage("Pode falar. Estou ouvindo.");
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
-        showMessage("Você: “" + transcript + "”");
-        respond(transcript);
+        if (chatInput) {
+          sendDemoMessage(transcript);
+        } else {
+          showMessage("Você: “" + transcript + "”");
+          respond(transcript);
+        }
       };
       recognition.onerror = () => {
         if (status) status.textContent = "Não foi possível ouvir";
@@ -94,14 +98,57 @@
   const chatForm = document.querySelector("#chat-form");
   const chatInput = document.querySelector("#chat-input");
   const chatLog = document.querySelector("#chat-log");
+  const clearChatButton = document.querySelector("#clear-chat");
+  const historyKey = "atlas-demo-chat-v1";
+  let chatHistory = [];
+
+  const renderChatHistory = () => {
+    if (!chatLog) return;
+    chatLog.replaceChildren();
+    chatHistory.forEach((message) => {
+      const item = document.createElement("div");
+      item.className = "chat-message " + message.who;
+      item.textContent = message.text;
+      chatLog.appendChild(item);
+    });
+    chatLog.scrollTop = chatLog.scrollHeight;
+  };
+
+  const saveChatHistory = () => {
+    try {
+      window.localStorage.setItem(historyKey, JSON.stringify(chatHistory.slice(-40)));
+    } catch (_) {
+      showMessage("Não foi possível salvar a conversa neste navegador.");
+    }
+  };
+
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(historyKey) || "[]");
+    if (Array.isArray(saved)) {
+      chatHistory = saved.filter((item) =>
+        item && (item.who === "user" || item.who === "atlas") &&
+        typeof item.text === "string"
+      ).slice(-40);
+    }
+  } catch (_) {
+    chatHistory = [];
+  }
+  renderChatHistory();
 
   const addChatMessage = (text, who) => {
-    if (!chatLog) return;
-    const item = document.createElement("div");
-    item.className = "chat-message " + who;
-    item.textContent = text;
-    chatLog.appendChild(item);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    chatHistory.push({ text, who });
+    chatHistory = chatHistory.slice(-40);
+    renderChatHistory();
+    saveChatHistory();
+  };
+
+  const sendDemoMessage = (message) => {
+    addChatMessage(message, "user");
+    const answer = getDemoAnswer(message);
+    addChatMessage(answer, "atlas");
+    showMessage("Mensagem recebida · modo de demonstração");
+    if (status) status.textContent = "Conversa de demonstração";
+    return answer;
   };
 
   if (chatForm && chatInput) {
@@ -112,13 +159,24 @@
         chatInput.focus();
         return;
       }
-      addChatMessage(message, "user");
       chatInput.value = "";
-      const answer = getDemoAnswer(message);
-      addChatMessage(answer, "atlas");
-      showMessage("Mensagem recebida · modo de demonstração");
-      if (status) status.textContent = "Conversa de demonstração";
+      sendDemoMessage(message);
       chatInput.focus();
+    });
+  }
+
+  if (clearChatButton) {
+    clearChatButton.addEventListener("click", () => {
+      chatHistory = [];
+      renderChatHistory();
+      try {
+        window.localStorage.removeItem(historyKey);
+      } catch (_) {
+        showMessage("A conversa foi limpa nesta tela, mas o navegador não permitiu apagar o histórico salvo.");
+      }
+      showMessage("Conversa limpa.");
+      if (status) status.textContent = "Conversa limpa";
+      if (chatInput) chatInput.focus();
     });
   }
 
