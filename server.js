@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
     if (!apiKey) {
       sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
       return;
@@ -167,7 +167,7 @@ const server = http.createServer(async (req, res) => {
           400: "O Gemini recusou o pedido. Confira se GEMINI_MODEL está correto e se a chave é do Google AI Studio.",
           401: "A chave GEMINI_API_KEY foi recusada. Confira a chave no Render e, se necessário, gere outra no Google AI Studio.",
           403: "A API recusou a chave por falta de permissão. Confira se a Generative Language API está habilitada e se a chave não tem restrições incompatíveis.",
-          404: "O modelo do Gemini não está disponível para esta chave. Confira o modelo configurado e tente novamente.",
+          404: "O Gemini não disponibilizou este modelo para a chave. Confira se GEMINI_MODEL existe no Render; se existir, remova-a para usar o modelo padrão atual.",
           429: "O Gemini atingiu o limite de uso ou a cota disponível. Confira os limites da API e tente novamente mais tarde."
         };
         const errorMessage = providerErrors[response.status] ||
