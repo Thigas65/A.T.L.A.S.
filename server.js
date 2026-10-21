@@ -152,10 +152,10 @@ const server = http.createServer(async (req, res) => {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, a menos que o usuário peça outro idioma." }]
+            parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Seja direto e conciso por padrão, mas explique melhor quando a pergunta exigir." }]
           },
           contents: [{ role: "user", parts: [{ text: message }] }],
-          generationConfig: { maxOutputTokens: 700, temperature: 0.7 }
+          generationConfig: { maxOutputTokens: 450, temperature: 0.7 }
         }),
         signal: AbortSignal.timeout(30_000)
       });
