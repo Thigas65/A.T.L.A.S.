@@ -327,7 +327,7 @@
     saveChatHistory();
   };
 
-  const API_URL = window.ATLAS_API_URL || "http://127.0.0.1:8787/api/chat";
+  const API_URL = window.ATLAS_API_URL || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8787/api/chat" : "/.netlify/functions/chat");
 
   const sendDemoMessage = async (message) => {
     addChatMessage(message, "user");
@@ -356,7 +356,7 @@
       const messageText = error && error.name === "TimeoutError"
         ? "O Gemini demorou demais para responder. Tente novamente."
         : (error && error.message || "").includes("Failed to fetch")
-          ? "Não consegui acessar o servidor do ATLAS. Inicie o servidor da API e configure a chave Gemini."
+          ? "Não consegui acessar a IA. Se o site estiver publicado, confira a função do servidor e a variável GEMINI_API_KEY; se estiver local, inicie o servidor da API."
           : (error && error.message || "Não consegui conectar ao Gemini.");
       addChatMessage(messageText, "atlas");
       showMessage(messageText);
