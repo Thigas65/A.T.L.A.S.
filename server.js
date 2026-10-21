@@ -5,10 +5,23 @@
 "use strict";
 
 const http = require("node:http");
+const fs = require("node:fs");
+const path = require("node:path");
 
-const HOST = process.env.ATLAS_HOST || "127.0.0.1";
-const PORT = Number(process.env.ATLAS_PORT || 8787);
-const ALLOWED_ORIGIN = process.env.ATLAS_ALLOWED_ORIGIN || "http://127.0.0.1:4173";
+const HOST = "0.0.0.0";
+const PORT = Number(process.env.PORT || process.env.ATLAS_PORT || 10000);
+const ROOT = __dirname;
+const STATIC_FILES = {
+  "/": { file: "index.html", type: "text/html; charset=utf-8" },
+  "/index.html": { file: "index.html", type: "text/html; charset=utf-8" },
+  "/app.js": { file: "app.js", type: "text/javascript; charset=utf-8" }
+};
+
+function isSameOrigin(origin, req) {
+  if (!origin) return true;
+  const proto = String(req.headers["x-forwarded-proto"] || "http").split(",")[0].trim();
+  return origin === proto + "://" + req.headers.host;
+}
 const MAX_BODY_BYTES = 16 * 1024;
 const MAX_MESSAGE_CHARS = 4000;
 const WINDOW_MS = 60_000;
@@ -20,10 +33,7 @@ function sendJson(res, status, payload, origin) {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
-    ...(origin === ALLOWED_ORIGIN ? {
-      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-      "Vary": "Origin"
-    } : {})
+    "Vary": "Origin"
   });
   res.end(JSON.stringify(payload));
 }
@@ -42,34 +52,41 @@ function allowedByRateLimit(address) {
 
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
+  const pathname = new URL(req.url, "http://localhost").pathname;
 
-  if (origin && origin !== ALLOWED_ORIGIN) {
+  if (!isSameOrigin(origin, req)) {
     sendJson(res, 403, { error: "Origem não permitida." });
     return;
   }
 
   if (req.method === "OPTIONS") {
-    if (origin && origin !== ALLOWED_ORIGIN) {
-      sendJson(res, 403, { error: "Origem não permitida." });
-      return;
-    }
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Access-Control-Max-Age": "600",
-      "Vary": "Origin"
-    });
+    res.writeHead(204, { "Cache-Control": "no-store" });
     res.end();
     return;
   }
 
-  if (req.url === "/health" && req.method === "GET") {
+  if (pathname === "/health" && req.method === "GET") {
     sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true" });
     return;
   }
 
-  if (req.url !== "/api/chat" || req.method !== "POST") {
+  if ((pathname === "/" || pathname === "/index.html" || pathname === "/app.js") && (req.method === "GET" || req.method === "HEAD")) {
+    const asset = STATIC_FILES[pathname];
+    try {
+      const content = fs.readFileSync(path.join(ROOT, asset.file));
+      res.writeHead(200, {
+        "Content-Type": asset.type,
+        "Cache-Control": "no-cache",
+        "X-Content-Type-Options": "nosniff"
+      });
+      res.end(req.method === "HEAD" ? undefined : content);
+    } catch {
+      sendJson(res, 500, { error: "Não foi possível carregar a interface do ATLAS." });
+    }
+    return;
+  }
+
+  if (pathname !== "/api/chat" || req.method !== "POST") {
     sendJson(res, 404, { error: "Rota não encontrada." });
     return;
   }
@@ -171,6 +188,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  // Deliberately log only the local address, never configuration secrets.
-  console.log(`ATLAS API bridge em http://${HOST}:${PORT} (IA desativada por padrão)`);
+  // Deliberately log only the listening address, never configuration secrets.
+  console.log(`ATLAS pronto em http://${HOST}:${PORT} (IA desativada por padrão)`);
 });
