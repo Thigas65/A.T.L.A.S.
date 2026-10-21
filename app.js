@@ -124,8 +124,7 @@
     if (!command) return;
     if (chatInput) {
       chatInput.value = command;
-      const answer = await sendDemoMessage(command);
-      if (answer) say(answer);
+      await sendDemoMessage(command);
     } else {
       showMessage("Você: “" + command + "”");
       respond(command);
@@ -742,6 +741,7 @@
     addChatMessage(message, "user");
     if (localAnswer !== null) {
       addChatMessage(localAnswer, "atlas");
+      say(localAnswer);
       showMessage("Resposta calculada localmente.");
       if (status) status.textContent = "Ferramenta local concluída";
       if (chatInput) { chatInput.disabled = false; chatInput.focus(); }
@@ -834,6 +834,7 @@
 
       if (!streamedAnswer.trim()) throw new Error("O Gemini não retornou texto nesta resposta.");
       addChatMessage(streamedAnswer.trim(), "atlas");
+      say(streamedAnswer.trim());
       showMessage("Resposta recebida do Gemini.");
       if (status) status.textContent = "Gemini conectado";
       return streamedAnswer.trim();
