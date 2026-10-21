@@ -8,7 +8,8 @@ Protótipo inicial da interface do **ATLAS**, um assistente virtual em desenvolv
 - Layout responsivo para computador e celular.
 - Controles laterais de navegação demonstrativos.
 - Campo de conversa por texto com respostas locais de demonstração.
-- Teste experimental de reconhecimento e reprodução de voz, dependendo do navegador e das permissões.
+- Reconhecimento de fala em português (Brasil), com botão para iniciar/parar e feedback visual de escuta, dependendo do navegador e das permissões.
+- Respostas faladas usando a síntese de voz do navegador, com preferência ativável nas configurações.
 
 ## Como testar
 
@@ -29,14 +30,14 @@ Para executar localmente, com Node.js instalado:
 1. Execute `npm install`.
 2. Execute `npx playwright install chromium`.
 3. Execute `npm run test:syntax` para verificar a sintaxe JavaScript.
-4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda, adaptação de tela, acessibilidade do menu e indicação de recursos planejados.
+4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda, adaptação de tela, acessibilidade do menu, recursos planejados e controles de voz.
 
 ## Arquivos principais
 
 - `index.html` — estrutura da página e estilos.
 - `app.js` — interações de demonstração por texto, navegação e voz.
 
-O objetivo da próxima etapa é evoluir a interface e planejar uma conexão com IA que respeite os limites de custo e segurança.
+O reconhecimento de fala e a síntese de voz são independentes da futura integração com IA: neste momento, o ATLAS ainda responde com frases demonstrativas. O reconhecimento depende do navegador e pode usar serviços do próprio navegador; não é um sistema de escuta contínua nem funciona com o dispositivo desligado. A integração futura com assistente doméstico/wake word será uma etapa separada.
 
 
 ## Menu lateral (versão 0.2)
