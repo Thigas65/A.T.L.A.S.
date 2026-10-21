@@ -147,6 +147,137 @@
       .subtitle { font-size: 17px; }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  
+    /* Identidade visual oficial ATLAS — grade holográfica, painéis laterais e núcleo central. */
+    body {
+      background:
+        radial-gradient(ellipse at 50% 10%, rgba(0, 105, 255, .38), transparent 48%),
+        radial-gradient(ellipse at 50% 68%, rgba(0, 70, 255, .22), transparent 46%),
+        linear-gradient(180deg, #02091b 0%, #001746 57%, #02091b 100%);
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(0, 126, 255, .34) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 126, 255, .34) 1px, transparent 1px);
+      background-size: 4.45vw 6.3vh; opacity: .82;
+      mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+    }
+    body::after {
+      content: ""; position: fixed; left: -15%; right: -15%; bottom: -23vh; height: 48vh; pointer-events: none; z-index: 0;
+      transform: perspective(440px) rotateX(56deg); transform-origin: top center;
+      background-image: linear-gradient(rgba(0, 137, 255, .7) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 137, 255, .7) 1px, transparent 1px);
+      background-size: 4.45vw 5.2vh; box-shadow: 0 -4px 32px rgba(0, 148, 255, .28);
+    }
+    .app { position: relative; z-index: 1; grid-template-columns: minmax(245px, 21.8vw) minmax(340px, 1fr) minmax(300px, 25.5vw); gap: 0; }
+    .rail.left {
+      align-items: stretch; justify-content: flex-start; gap: 0; margin: 8.7vh 0 33vh 1.7vw; padding: 14px 12px 12px;
+      border: 1px solid rgba(0, 194, 255, .9); border-radius: 27px; background: linear-gradient(145deg, rgba(1, 18, 48, .94), rgba(0, 8, 26, .92));
+      box-shadow: 0 0 20px rgba(0, 153, 255, .2), inset 0 0 22px rgba(0, 102, 255, .08); min-width: 0;
+    }
+    .reference-brand { display:flex; align-items:center; gap:16px; height:50px; padding:0 14px 10px; color:#eaf8ff; letter-spacing:.2em; font-size:20px; }
+    .reference-brand-core { width:28px; height:28px; border-radius:50%; border:3px solid #00d9ff; box-shadow:0 0 14px #00bfff, inset 0 0 10px rgba(0,195,255,.3); flex:0 0 auto; }
+    .nav-button {
+      width:100%; min-height:52px; height:auto; flex:0 0 auto; display:flex; align-items:center; justify-content:flex-start; gap:15px;
+      padding:10px 14px; border:1px solid transparent; border-radius:15px; background:transparent; color:#9fdcff; font-size:16px; text-align:left;
+      box-shadow:none; transform:none; white-space:nowrap;
+    }
+    .nav-button svg { width:26px; height:26px; flex:0 0 26px; }
+    .nav-button span { display:inline; }
+    .nav-button.active, .nav-button[aria-label="Início"] { color:#fff; background:linear-gradient(90deg,rgba(0,112,255,.42),rgba(0,52,138,.38)); border-color:rgba(0,138,255,.58); box-shadow:0 0 16px rgba(0,123,255,.2); }
+    .nav-button:hover, .nav-button:focus-visible { transform:none; border-color:rgba(0,214,255,.65); background:rgba(0,104,230,.22); }
+    .rail-status { display:flex; align-items:flex-start; gap:12px; margin-top:auto; padding:13px 14px 8px; border-radius:14px; background:rgba(0,39,94,.34); color:#9fdcff; font-size:14px; }
+    .rail-status > span { width:12px; height:12px; margin-top:4px; border-radius:50%; background:#00e9ac; box-shadow:0 0 14px #00e9ac; flex:0 0 auto; }
+    .rail-status small { display:block; margin-top:5px; font-size:11px; color:#9bc7e7; }
+    main { position:relative; overflow:visible; padding:0 10px 0; justify-content:center; min-width:0; }
+    .eyebrow, main > h1, .subtitle, .status, .hint { display:none; }
+    .core-wrap { width:clamp(320px, 40vw, 620px); margin:0; flex:0 0 auto; }
+    .orbit { inset:2%; border:1px solid rgba(0,207,255,.48); box-shadow:0 0 22px rgba(0,119,255,.18); }
+    .orbit::before, .orbit::after { width:6px; height:6px; }
+    .orbit.two { inset:7%; border-color:rgba(0,111,255,.62); }
+    .core-wrap::before, .core-wrap::after { content:""; position:absolute; inset:12% -5%; border:1px solid rgba(0,201,255,.62); border-radius:50%; transform:rotate(-24deg); box-shadow:0 0 16px rgba(0,155,255,.18); }
+    .core-wrap::after { inset:17% -7%; transform:rotate(29deg); border-color:rgba(0,118,255,.58); }
+    .core { width:auto; height:auto; aspect-ratio:auto; border:0; border-radius:0; background:transparent; box-shadow:none; z-index:1; }
+    .core::before { display:none; }
+    .core-mark { color:#f0fbff; font-size:clamp(32px,3.1vw,52px); font-weight:400; letter-spacing:.27em; padding-left:.27em; text-shadow:0 0 12px #1cbdff,0 0 30px #0878ff; }
+    .chat-panel { position:fixed; z-index:5; left:12.9vw; bottom:8.5vh; width:74.2vw; max-width:none; margin:0; }
+    .chat-heading, .chat-note { display:none; }
+    .chat-log { max-height:19vh; margin:0 0 8px; padding:0 22px; }
+    .chat-form { position:relative; height:10.2vh; min-height:72px; max-height:106px; align-items:center; gap:16px; padding:8px 26px; border:2px solid #00cfff; border-radius:60px; background:rgba(0,13,39,.94); box-shadow:0 0 22px rgba(0,151,255,.42), inset 0 0 20px rgba(0,76,185,.16); }
+    .chat-form:focus-within { border-color:#44efff; box-shadow:0 0 28px rgba(0,197,255,.42); }
+    .chat-mic { width:70px; height:70px; min-height:0; padding:0; flex:0 0 70px; justify-content:center; border:2px solid #00cfff; border-radius:50%; color:#00e3ff; background:rgba(0,63,139,.35); }
+    .chat-mic svg { width:30px; height:30px; }
+    .chat-form input { font-size:17px; padding:12px 12px; border-left:1px solid rgba(0,207,255,.8); padding-left:28px; }
+    .chat-form input::placeholder { color:#78bfe8; }
+    .chat-form button[type="submit"] { width:62px; height:62px; flex:0 0 62px; border-radius:50%; background:transparent; color:#00eaff; }
+    .chat-form button[type="submit"] svg { width:36px; height:36px; }
+    .right-panel {
+      display:flex; flex-direction:column; justify-content:flex-start; gap:25px; align-self:start; margin:9.2vh 1.2vw 0 0; padding:28px 20px;
+      border:1px solid rgba(0,190,255,.9); border-radius:27px; background:linear-gradient(145deg,rgba(1,18,48,.95),rgba(0,8,26,.93));
+      box-shadow:0 0 20px rgba(0,153,255,.2),inset 0 0 22px rgba(0,102,255,.08); min-width:0;
+    }
+    .feature-card { display:flex; align-items:center; gap:16px; width:100%; min-height:132px; padding:18px 16px; text-align:left; border:1px solid rgba(0,137,255,.62); border-radius:22px; background:linear-gradient(110deg,rgba(2,23,60,.92),rgba(0,14,39,.9)); color:#eefaff; cursor:pointer; }
+    .feature-card:hover, .feature-card:focus-visible { outline:none; border-color:#00dfff; box-shadow:0 0 20px rgba(0,153,255,.22); }
+    .feature-icon { display:grid; place-items:center; width:76px; height:76px; flex:0 0 76px; border-radius:50%; border:1px solid rgba(0,200,255,.7); color:#e9ffff; font-size:40px; background:radial-gradient(circle at 30% 25%,#087cff,#0032a5); box-shadow:0 0 18px rgba(0,126,255,.25); }
+    .link-icon { background:radial-gradient(circle at 30% 25%,#3127ff,#10136c); font-size:44px; }
+    .folder-icon { background:radial-gradient(circle at 30% 25%,#00c5d8,#00536e); }
+    .feature-copy { min-width:0; display:flex; flex-direction:column; gap:10px; }
+    .feature-copy strong { font-size:clamp(13px,1.05vw,17px); font-weight:600; white-space:nowrap; }
+    .feature-copy small { color:#b0d3f3; font-size:clamp(10px,.8vw,13px); line-height:1.6; }
+    .feature-arrow { margin-left:auto; font-size:34px; font-weight:300; color:#8cdcff; }
+    .menu-toggle { z-index:50; top:18px; left:18px; width:42px; height:42px; opacity:0; pointer-events:none; }
+    .side-menu { z-index:60; }
+    .app.chat-mode main, .app.settings-mode main, .app.help-mode main, .app.feature-mode main { justify-content:flex-start; padding-top:clamp(24px,7vh,64px); }
+    .app.chat-mode .core-wrap, .app.settings-mode .core-wrap, .app.help-mode .core-wrap, .app.feature-mode .core-wrap { display:none; }
+    .app.chat-mode .chat-panel { position:relative; left:auto; bottom:auto; width:min(760px,92vw); margin:0 auto; }
+    .app.chat-mode .chat-heading { display:flex; }
+    .app.chat-mode .chat-note { display:block; }
+    .app.chat-mode .chat-form { height:auto; min-height:58px; max-height:none; border-radius:20px; }
+    .app.chat-mode .chat-mic { width:42px; height:42px; flex-basis:42px; }
+    .app.chat-mode .chat-form button[type="submit"] { width:42px; height:42px; flex-basis:42px; }
+    .app.feature-mode .feature-placeholder { display:block; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns:64px minmax(0,1fr); }
+      .rail.left { margin:0; padding:84px 6px 14px; border-radius:0; border-width:0 1px 0 0; }
+      .reference-brand { justify-content:center; padding:0 0 18px; height:auto; font-size:0; }
+      .reference-brand-core { width:25px; height:25px; }
+      .rail.left .nav-button { min-height:45px; padding:9px; justify-content:center; border-radius:13px; }
+      .rail.left .nav-button span, .rail-status { display:none; }
+      .rail.left .nav-button svg { width:23px; height:23px; }
+      .right-panel { display:none; }
+      main { padding:70px 8px 0; }
+      .core-wrap { width:clamp(190px,50vw,360px); }
+      .core-mark { font-size:clamp(26px,5vw,42px); }
+      .chat-panel { left:7vw; width:86vw; bottom:3vh; }
+      .chat-form { height:76px; min-height:76px; padding:7px 12px; gap:8px; }
+      .chat-mic { width:54px; height:54px; flex-basis:54px; }
+      .chat-mic svg { width:25px; height:25px; }
+      .chat-form input { font-size:14px; padding-left:14px; }
+      .chat-form button[type="submit"] { width:46px; height:46px; flex-basis:46px; }
+      .chat-form button[type="submit"] svg { width:26px; height:26px; }
+      .menu-toggle { opacity:1; pointer-events:auto; }
+    }
+    @media (max-width: 420px) {
+      .app { grid-template-columns:50px minmax(0,1fr); }
+      .rail.left { padding-left:3px; padding-right:3px; }
+      .rail.left .nav-button { width:42px; min-height:43px; }
+      .core-wrap { width:clamp(175px,55vw,240px); }
+      .chat-panel { left:4vw; width:92vw; }
+      .chat-form { min-height:68px; height:68px; padding:5px 9px; }
+      .chat-mic { width:46px; height:46px; flex-basis:46px; }
+      .chat-form input { font-size:13px; padding-left:10px; }
+      .chat-form button[type="submit"] { width:42px; height:42px; flex-basis:42px; }
+    }
+    /* Em TV, a tela fica dedicada ao núcleo ATLAS e à barra de conversa. */
+    @media (min-width: 1600px) and (min-height: 800px) {
+      .app { grid-template-columns:0 minmax(0,1fr) 0; }
+      .rail.left, .right-panel { display:none; }
+      .core-wrap { width:min(46vh,700px); }
+      .chat-panel { left:17vw; width:66vw; }
+      .menu-toggle { display:none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .orbit, .core-wrap::before, .core-wrap::after { animation:none !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -168,10 +299,16 @@
     <div class="menu-footer">ATLAS · versão 0.2<br>Protótipo em desenvolvimento. Recursos de IA e memória ainda não conectados.</div>
   </aside>
   <div class="app">
-    <nav class="rail" aria-label="Navegação principal">
-      <button class="nav-button" aria-label="Início" title="Início"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-7h6v7"/></svg></button>
-      <button class="nav-button" aria-label="Conversas" title="Conversas"><svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5Z"/><path d="M8 10h8M8 14h5"/></svg></button>
-      <button class="nav-button" aria-label="Configurações" title="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)"/></svg></button>
+    <nav class="rail left" aria-label="Navegação principal">
+      <div class="reference-brand"><span class="reference-brand-core" aria-hidden="true"></span><span>ATLAS</span></div>
+      <button class="nav-button active" aria-label="Início" title="Início"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-7h6v7"/></svg><span>Início</span></button>
+      <button class="nav-button" aria-label="Conversas" title="Conversas"><svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5Z"/><path d="M8 10h8M8 14h5"/></svg><span>Conversas</span></button>
+      <button class="nav-button" aria-label="Projetos" title="Projetos"><svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v11H3z"/><path d="M3 7V4h7l2 3"/></svg><span>Projetos</span></button>
+      <button class="nav-button" aria-label="Memória" title="Memória"><svg viewBox="0 0 24 24"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 3 3 3 0 0 0 2 3v2a3 3 0 0 0 3 3M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 3 3 3 0 0 1-2 3v2a3 3 0 0 1-3 3M9 7h6M9 12h6M9 17h6"/></svg><span>Memória</span></button>
+      <button class="nav-button" aria-label="Dispositivos" title="Dispositivos"><svg viewBox="0 0 24 24"><path d="M8 8 5 11a4 4 0 0 0 6 6l3-3M16 16l3-3a4 4 0 0 0-6-6l-3 3"/></svg><span>Dispositivos</span></button>
+      <button class="nav-button" aria-label="Aplicativos" title="Aplicativos"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Aplicativos</span></button>
+      <button class="nav-button" aria-label="Configurações" title="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)"/></svg><span>Configurações</span></button>
+      <div class="rail-status"><span></span><div>Online<small>Pronto para ajudar</small></div></div>
     </nav>
     <main>
       <h2 class="view-title" id="view-title">Conversas</h2>
@@ -179,7 +316,7 @@
       <div class="core-wrap" aria-label="Núcleo visual ATLAS">
         <div class="orbit"></div>
         <div class="orbit two"></div>
-        <div class="core"><span class="core-mark">A</span></div>
+        <div class="core"><span class="core-mark">ATLAS</span></div>
       </div>
       <h1>ATLAS</h1>
       <p class="subtitle">Seu assistente. Seu universo.</p>
@@ -193,12 +330,12 @@
         <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
         <form class="chat-form" id="chat-form">
           <label class="sr-only" for="chat-input">Mensagem para o ATLAS</label>
-          <input id="chat-input" name="message" type="text" maxlength="500" placeholder="Converse com o ATLAS..." autocomplete="off">
+          <button class="nav-button chat-mic" type="button" aria-label="Áudio" title="Falar com o ATLAS"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg></button><input id="chat-input" name="message" type="text" maxlength="500" placeholder="Fale com o ATLAS..." autocomplete="off">
           <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
           </button>
         </form>
-        <p class="chat-note">Conexão com Gemini · requer servidor e chave configurados</p>
+        <p class="chat-note"> </p>
       </section>
       <section class="feature-placeholder" id="feature-placeholder" aria-live="polite"><h2 id="feature-heading">Memória do ATLAS</h2><p id="feature-description"></p><div class="feature-state" id="feature-state">RECURSO PLANEJADO</div></section>
       <section class="settings-panel" id="settings-panel" aria-label="Painel de informações">
@@ -211,10 +348,11 @@
         <p id="panel-footnote">As opções são locais neste protótipo. Ainda não existe conexão com uma IA.</p>
       </section>
     </main>
-    <nav class="rail right" aria-label="Ferramentas">
-      <button class="nav-button" aria-label="Áudio" title="Áudio"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg></button>
-      <button class="nav-button" aria-label="Ajuda" title="Ajuda"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 4.3 1.7c-1.2 1.1-1.9 1.4-1.9 3M12 17h.01"/></svg></button>
-    </nav>
+    <aside class="right-panel" aria-label="Recursos do ATLAS">
+      <button class="feature-card" type="button" data-menu-action="new-chat"><span class="feature-icon brain-icon">♧</span><span class="feature-copy"><strong>Conhecimento</strong><small>Pergunte, aprenda, explore.<br>O ATLAS te explica tudo.</small></span><span class="feature-arrow">›</span></button>
+      <button class="feature-card" type="button" data-menu-action="settings"><span class="feature-icon link-icon">↗</span><span class="feature-copy"><strong>Ações e Integrações</strong><small>Controle seus dispositivos,<br>aplicativos e sistemas.</small></span><span class="feature-arrow">›</span></button>
+      <button class="feature-card" type="button" data-menu-action="lab"><span class="feature-icon folder-icon">▱</span><span class="feature-copy"><strong>Projetos e Tarefas</strong><small>Organize suas ideias,<br>metas e próximos passos.</small></span><span class="feature-arrow">›</span></button>
+    </aside>
   </div>
   <script src="./app.js" defer></script>
 </body>
