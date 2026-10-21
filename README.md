@@ -12,9 +12,10 @@ O repositório inclui `netlify.toml` e a função `netlify/functions/chat.js`.
 
 1. Entre no Netlify e crie um site importando o repositório GitHub `Thigas65/A.T.L.A.S.`.
 2. Nas configurações do site, abra **Environment variables** e adicione `GEMINI_API_KEY` com a chave da API do Gemini. Não compartilhe a chave nem a coloque no código.
-3. Opcionalmente, defina `GEMINI_MODEL` como `gemini-2.5-flash` (esse é o padrão).
-4. Faça um novo deploy após salvar as variáveis.
-5. Abra o endereço público do site e teste o chat.
+3. Adicione `ATLAS_AI_ENABLED` com o valor `true` para ativar a IA. Sem isso, a função fica desligada para evitar chamadas acidentais.
+4. Opcionalmente, defina `GEMINI_MODEL` como `gemini-2.5-flash` (esse é o padrão).
+5. Faça um novo deploy após salvar as variáveis.
+6. Abra o endereço público do site e teste o chat.
 
 A chave secreta de GitHub Actions não é transferida automaticamente ao Netlify. A variável `GEMINI_API_KEY` precisa ser cadastrada nas configurações do site hospedado. A função responde com erro claro se a variável estiver ausente.
 
