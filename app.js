@@ -530,6 +530,9 @@
   let chatSessions = [];
   let activeSessionId = "";
   let chatHistory = [];
+  // O histórico persistido continua disponível como contexto, mas conversas antigas
+  // não são desenhadas na tela ao abrir o site.
+  let visibleChatHistory = [];
 
   const createSession = (title = "Nova conversa") => ({
     id: "atlas-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7),
@@ -561,7 +564,7 @@
   const renderChatHistory = () => {
     if (!chatLog) return;
     chatLog.replaceChildren();
-    const visibleMessages = chatHistory.slice(-2);
+    const visibleMessages = visibleChatHistory.slice(-2);
     for (const message of visibleMessages) {
       const item = document.createElement("div");
       item.className = "chat-message " + message.who;
@@ -575,6 +578,7 @@
     if (!target) return;
     activeSessionId = target.id;
     chatHistory = target.messages.slice(-40);
+    visibleChatHistory = [];
     renderChatHistory();
     saveSessions();
     document.querySelector(".app")?.classList.add("chat-mode");
@@ -589,6 +593,7 @@
     chatSessions = chatSessions.slice(0, 30);
     activeSessionId = session.id;
     chatHistory = session.messages;
+    visibleChatHistory = [];
     renderChatHistory();
     saveSessions();
   };
@@ -624,6 +629,7 @@
       chatSessions = [];
       startNewConversation();
       chatHistory = [];
+      visibleChatHistory = [];
       renderChatHistory();
       saveChatHistory();
       featureState.textContent = "HISTÓRICO APAGADO";
@@ -656,11 +662,15 @@
   }
   activeSessionId = chatSessions[0].id;
   chatHistory = chatSessions[0].messages.slice(-40);
+  visibleChatHistory = [];
   renderChatHistory();
   saveSessions();
 
   const addChatMessage = (text, who) => {
-    chatHistory.push({ text, who });
+    const message = { text, who };
+    chatHistory.push(message);
+    visibleChatHistory.push(message);
+    visibleChatHistory = visibleChatHistory.slice(-2);
     chatHistory = chatHistory.slice(-40);
     const active = getActiveSession();
     if (active && who === "user" && active.messages.length === 0) {
