@@ -32,6 +32,10 @@ exports.handler = async (event) => {
     return { statusCode: 413, headers, body: JSON.stringify({ error: "A mensagem deve ter até 4000 caracteres." }) };
   }
 
+  if (process.env.ATLAS_AI_ENABLED !== "true") {
+    return { statusCode: 503, headers, body: JSON.stringify({ error: "A IA está desativada. Ative ATLAS_AI_ENABLED nas variáveis do site para habilitá-la." }) };
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return { statusCode: 503, headers, body: JSON.stringify({ error: "Falta configurar GEMINI_API_KEY nas variáveis de ambiente do site hospedado." }) };
