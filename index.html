@@ -378,22 +378,34 @@
         <div class="orbit two"></div>
         <div class="core">
           <span class="core-mark" aria-hidden="true">
-            <svg viewBox="0 0 100 100" role="img" aria-label="Símbolo geométrico azul do ATLAS">
-              <g class="nucleus-spin">
-                <circle cx="50" cy="50" r="29" fill="none" stroke="#b7faff" stroke-width="2" opacity=".95"/>
-                <ellipse cx="50" cy="50" rx="29" ry="12" fill="none" stroke="#7ceeff" stroke-width="1.5" opacity=".9"/>
-                <path d="M21 50H79 M50 21V79" fill="none" stroke="#7ceeff" stroke-width="1.2" opacity=".8"/>
-                <circle cx="50" cy="21" r="3" fill="#e6fdff"/>
-                <circle cx="79" cy="50" r="3" fill="#e6fdff"/>
+            <svg viewBox="0 0 100 100" role="img" aria-label="Núcleo holográfico circular do ATLAS">
+              <defs>
+                <radialGradient id="atlasGlow">
+                  <stop offset="0%" stop-color="#087cff" stop-opacity=".5"/>
+                  <stop offset="70%" stop-color="#004cff" stop-opacity=".12"/>
+                  <stop offset="100%" stop-color="#004cff" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="35" fill="url(#atlasGlow)"/>
+              <g class="nucleus-spin" fill="none" stroke-linecap="round">
+                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#00dfff" stroke-width="1.1" opacity=".9"/>
+                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#168bff" stroke-width=".7" transform="rotate(28 50 50)" opacity=".9"/>
+                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#37caff" stroke-width=".65" transform="rotate(55 50 50)" opacity=".75"/>
+                <path d="M13 48 C20 12 71 7 87 40 S65 90 28 78 S13 48 50 23 S91 54 55 82 S8 57 40 20 S90 37 82 66 S34 90 16 59 S53 4 78 29 S53 89 23 67" stroke="#00cfff" stroke-width=".65" opacity=".8"/>
+                <path d="M16 39 C31 7 77 18 84 48 S57 89 25 71 S21 25 56 17 S89 52 65 75 S15 69 27 38 S73 17 85 53" stroke="#168bff" stroke-width=".7" opacity=".85"/>
               </g>
-              <g class="nucleus-counterspin">
-                <circle cx="50" cy="50" r="18" fill="none" stroke="#e1fdff" stroke-width="1.8"/>
-                <ellipse cx="50" cy="50" rx="12" ry="29" fill="none" stroke="#46e7ff" stroke-width="1.5" opacity=".95"/>
-                <circle cx="50" cy="32" r="2.5" fill="#ffffff"/>
+              <g class="nucleus-counterspin" fill="none" stroke-linecap="round">
+                <ellipse cx="50" cy="50" rx="27" ry="38" stroke="#00eaff" stroke-width=".8" opacity=".85"/>
+                <ellipse cx="50" cy="50" rx="21" ry="37" stroke="#4aeaff" stroke-width=".65" transform="rotate(35 50 50)" opacity=".8"/>
+                <ellipse cx="50" cy="50" rx="21" ry="37" stroke="#126dff" stroke-width=".65" transform="rotate(-35 50 50)" opacity=".8"/>
               </g>
-
-            </svg>
-          </span>
+              <g fill="#e9fdff">
+                <circle cx="50" cy="12" r="1.2"/><circle cx="84" cy="39" r="1.1"/>
+                <circle cx="20" cy="67" r="1.1"/><circle cx="70" cy="82" r="1.1"/>
+                <circle cx="13" cy="47" r=".9"/><circle cx="76" cy="22" r=".9"/>
+              </g>
+              <text x="50" y="54" fill="#f2fdff" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="400" letter-spacing="2.4" style="filter:drop-shadow(0 0 3px #00bfff)">ATLAS</text>
+            </svg>         </span>
         </div>
       </div>
       <h1>ATLAS</h1>
