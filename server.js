@@ -200,19 +200,28 @@ const server = http.createServer(async (req, res) => {
           } catch {}
         };
 
-        for await (const bytes of streamResponse.body) {
-          pending += decoder.decode(bytes, { stream: true });
-          const lines = pending.split(/\r?\n/);
-          pending = lines.pop() || "";
-          for (const line of lines) {
-            if (line.startsWith("data:")) emitGeminiEvent(line.slice(5).trim());
+        try {
+          for await (const bytes of streamResponse.body) {
+            pending += decoder.decode(bytes, { stream: true });
+            const lines = pending.split(/\r?\n/);
+            pending = lines.pop() || "";
+            for (const line of lines) {
+              if (line.startsWith("data:")) emitGeminiEvent(line.slice(5).trim());
+            }
           }
-        }
-        pending += decoder.decode();
-        if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
-        if (!res.destroyed) {
-          res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
-          res.end();
+          pending += decoder.decode();
+          if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
+          if (!res.destroyed && !res.writableEnded) {
+            res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
+            res.end();
+          }
+        } catch (streamError) {
+          console.warn("ATLAS Gemini stream interrupted:", streamError?.name || "error");
+          if (!res.destroyed && !res.writableEnded) {
+            res.write("data: " + JSON.stringify({ error: "A conexão com o Gemini foi interrompida. Tente novamente." }) + "\n\n");
+            res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
+            res.end();
+          }
         }
         return;
       }
