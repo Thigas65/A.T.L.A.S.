@@ -64,6 +64,9 @@
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #55f0c1; box-shadow: 0 0 12px #55f0c1; }
     .hint { margin-top: 10px; font-size: 11px; color: #607d9f; }
     .chat-panel { width: min(520px, 92vw); margin-top: 18px; }
+    .chat-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; color: #6f8cab; font-size: 10px; letter-spacing: .18em; }
+    .clear-chat { padding: 4px 7px; color: #8aa7c6; background: transparent; border: 1px solid rgba(112, 195, 255, .16); border-radius: 7px; font: inherit; letter-spacing: 0; cursor: pointer; }
+    .clear-chat:hover, .clear-chat:focus-visible { color: var(--cyan); border-color: var(--cyan); outline: none; }
     .chat-log { display: flex; flex-direction: column; gap: 8px; max-height: 130px; overflow-y: auto; margin-bottom: 10px; text-align: left; }
     .chat-message { max-width: 90%; padding: 9px 12px; border-radius: 13px; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
     .chat-message.user { align-self: flex-end; background: rgba(36, 123, 255, .22); border: 1px solid rgba(70, 150, 255, .3); }
@@ -118,6 +121,10 @@
       <div class="status"><span class="status-dot"></span><span>Sistema visual inicializado</span></div>
       <div class="hint" aria-live="polite">Interface inicial · versão 0.1</div>
       <section class="chat-panel" aria-label="Conversa de demonstração">
+        <div class="chat-heading">
+          <span>CONVERSA</span>
+          <button class="clear-chat" id="clear-chat" type="button">Limpar conversa</button>
+        </div>
         <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
         <form class="chat-form" id="chat-form">
           <label class="sr-only" for="chat-input">Mensagem para o ATLAS</label>
