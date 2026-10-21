@@ -66,7 +66,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", build: "atlas-diagnostics-1" });
     return;
   }
 
@@ -162,7 +162,12 @@ const server = http.createServer(async (req, res) => {
 
       if (!response.ok) {
         // Log only the HTTP status; never log the API key or provider response body.
-        console.warn("ATLAS Gemini HTTP status:", response.status);
+        let providerMessage = "sem detalhe";
+        try {
+          const providerBody = await response.clone().json();
+          if (typeof providerBody?.error?.message === "string") providerMessage = providerBody.error.message.slice(0, 300);
+        } catch {}
+        console.warn("ATLAS Gemini HTTP status:", response.status, "| provider:", providerMessage);
         const providerErrors = {
           400: "O Gemini recusou o pedido. Confira se GEMINI_MODEL está correto e se a chave é do Google AI Studio.",
           401: "A chave GEMINI_API_KEY foi recusada. Confira a chave no Render e, se necessário, gere outra no Google AI Studio.",
