@@ -2,6 +2,14 @@
    * A conversa ainda não usa um modelo de IA nem envia dados a um servidor.
    */
 (() => {
+  const params = new URLSearchParams(window.location.search);
+  const userAgent = navigator.userAgent || "";
+  const isSamsungTV = /SMART-TV|SmartTV|Tizen.*TV|TV.*Tizen/i.test(userAgent);
+  const isTVMode = params.get("tv") === "1" || isSamsungTV;
+  if (isTVMode) {
+    document.body.classList.add("tv-mode");
+    document.title = "ATLAS Core";
+  }
   const status = document.querySelector(".status span:last-child");
   const hint = document.querySelector(".hint");
   const subtitle = document.querySelector(".subtitle");
@@ -10,6 +18,11 @@
   const wakeWordToggle = document.querySelector("#wake-word-toggle");
   const permissionNote = document.querySelector("#voice-permission-note");
   const navButtons = [...document.querySelectorAll(".nav-button")];
+  if (isTVMode) {
+    if (status) status.textContent = "Núcleo visual ativo · modo TV";
+    if (hint) hint.textContent = "Para comandos de voz, use o celular.";
+    if (permissionNote) permissionNote.textContent = "O navegador da TV é usado aqui como tela visual do ATLAS.";
+  }
 
   const showMessage = (message) => {
     if (hint) hint.textContent = message;
