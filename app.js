@@ -127,8 +127,9 @@
         }
         if (chatInput) {
           chatInput.value = transcript;
-          const answer = sendDemoMessage(transcript);
-          say(answer);
+          sendDemoMessage(transcript).then((answer) => {
+            if (answer) say(answer);
+          });
         } else {
           showMessage("Você: “" + transcript + "”");
           respond(transcript);
@@ -326,13 +327,47 @@
     saveChatHistory();
   };
 
-  const sendDemoMessage = (message) => {
+  const API_URL = window.ATLAS_API_URL || "http://127.0.0.1:8787/api/chat";
+
+  const sendDemoMessage = async (message) => {
     addChatMessage(message, "user");
-    const answer = getDemoAnswer(message);
-    addChatMessage(answer, "atlas");
-    showMessage("Mensagem recebida · modo de demonstração");
-    if (status) status.textContent = "Conversa de demonstração";
-    return answer;
+    showMessage("Conectando ao Gemini…");
+    if (status) status.textContent = "Aguardando resposta do Gemini";
+    if (chatInput) chatInput.disabled = true;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        signal: AbortSignal.timeout(35_000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Não foi possível obter uma resposta do Gemini.");
+      if (typeof data.answer !== "string" || !data.answer.trim()) {
+        throw new Error("O Gemini não retornou uma resposta válida.");
+      }
+
+      addChatMessage(data.answer.trim(), "atlas");
+      showMessage("Resposta recebida do Gemini.");
+      if (status) status.textContent = "Gemini conectado";
+      return data.answer.trim();
+    } catch (error) {
+      const messageText = error && error.name === "TimeoutError"
+        ? "O Gemini demorou demais para responder. Tente novamente."
+        : (error && error.message || "").includes("Failed to fetch")
+          ? "Não consegui acessar o servidor do ATLAS. Inicie o servidor da API e configure a chave Gemini."
+          : (error && error.message || "Não consegui conectar ao Gemini.");
+      addChatMessage(messageText, "atlas");
+      showMessage(messageText);
+      if (status) status.textContent = "Conexão com IA indisponível";
+      return "";
+    } finally {
+      if (chatInput) {
+        chatInput.disabled = false;
+        chatInput.focus();
+      }
+    }
   };
 
   if (chatForm && chatInput) {
@@ -345,7 +380,6 @@
       }
       chatInput.value = "";
       sendDemoMessage(message);
-      chatInput.focus();
     });
   }
 
