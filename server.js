@@ -161,11 +161,20 @@ const server = http.createServer(async (req, res) => {
       });
 
       if (!response.ok) {
-        sendJson(res, response.status === 429 ? 429 : 502, {
-          error: response.status === 429
-            ? "O Gemini atingiu o limite de uso ou a cota disponível."
-            : "Não foi possível obter uma resposta do Gemini. Confira a configuração da API."
-        }, origin);
+        // Log only the HTTP status; never log the API key or provider response body.
+        console.warn("ATLAS Gemini HTTP status:", response.status);
+        const providerErrors = {
+          400: "O Gemini recusou o pedido. Confira se GEMINI_MODEL está correto e se a chave é do Google AI Studio.",
+          401: "A chave GEMINI_API_KEY foi recusada. Confira a chave no Render e, se necessário, gere outra no Google AI Studio.",
+          403: "A API recusou a chave por falta de permissão. Confira se a Generative Language API está habilitada e se a chave não tem restrições incompatíveis.",
+          404: "O modelo configurado não foi encontrado. Remova GEMINI_MODEL do Render para usar o modelo padrão ou configure um modelo disponível.",
+          429: "O Gemini atingiu o limite de uso ou a cota disponível. Confira os limites da API e tente novamente mais tarde."
+        };
+        const errorMessage = providerErrors[response.status] ||
+          (response.status >= 500
+            ? "O serviço do Gemini está temporariamente indisponível. Tente novamente mais tarde."
+            : "O Gemini recusou o pedido (HTTP " + response.status + "). Confira a configuração da API.");
+        sendJson(res, response.status === 429 ? 429 : 502, { error: errorMessage }, origin);
         return;
       }
 
