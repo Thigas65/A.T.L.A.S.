@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     if (!apiKey) {
       sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
       return;
