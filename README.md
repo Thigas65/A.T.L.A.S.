@@ -29,7 +29,7 @@ Para executar localmente, com Node.js instalado:
 1. Execute `npm install`.
 2. Execute `npx playwright install chromium`.
 3. Execute `npm run test:syntax` para verificar a sintaxe JavaScript.
-4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda e adaptação de tela.
+4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda, adaptação de tela, acessibilidade do menu e indicação de recursos planejados.
 
 ## Arquivos principais
 
