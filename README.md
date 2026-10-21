@@ -1,45 +1,59 @@
 # ATLAS
 
-Protótipo inicial da interface do **ATLAS**, um assistente virtual em desenvolvimento.
+Protótipo web do **ATLAS**, um assistente virtual em desenvolvimento, com núcleo visual azul/ciano, interface responsiva, conversa, histórico local e recursos de voz do navegador.
 
-## O que já existe
+## Integração com Gemini
 
-- Interface visual escura com núcleo circular azul/ciano.
-- Layout responsivo para computador e celular.
-- Controles laterais de navegação demonstrativos.
-- Campo de conversa por texto com respostas locais de demonstração.
-- Reconhecimento de fala em português (Brasil), com botão para iniciar/parar e feedback visual de escuta, dependendo do navegador e das permissões.
-- Respostas faladas usando a síntese de voz do navegador, com preferência ativável nas configurações.
+O chat agora está preparado para enviar mensagens ao servidor local do ATLAS, que chama a API do Google Gemini. A chave da API fica **somente no servidor** e nunca deve ser colocada em `app.js`, `index.html` ou enviada em conversas.
 
-## Como testar
+### Configuração local
 
-1. Abra o arquivo `index.html` no navegador, ou abra o repositório no GitHub Codespaces.
-2. Digite uma mensagem no campo **“Converse com o ATLAS...”** e pressione Enter ou o botão de envio.
-3. Para testar voz, use o botão de microfone e permita o acesso ao microfone quando o navegador solicitar.
+Requer Node.js 20 ou superior.
 
-## Importante
+1. Configure a variável de ambiente `GEMINI_API_KEY` com a chave existente do Gemini. Não a coloque em arquivos versionados.
+2. Ative a integração com `ATLAS_AI_ENABLED=true`.
+3. Inicie o servidor da API com `npm run start:api`.
+4. Em outro terminal, inicie o site na porta esperada pelo servidor: `npx http-server . -p 4173 -s`.
+5. Abra `http://127.0.0.1:4173`.
 
-Esta é uma **demonstração local**. As respostas de texto são pré-programadas e o recurso de voz depende do suporte do navegador. O projeto ainda não está conectado a um modelo de inteligência artificial, não possui memória de conversas e não envia mensagens a um servidor.
+No macOS/Linux, as variáveis podem ser definidas na sessão do terminal antes de iniciar o servidor:
 
-## Testes automatizados
+```sh
+export GEMINI_API_KEY="sua-chave"
+export ATLAS_AI_ENABLED="true"
+npm run start:api
+```
 
-O repositório inclui testes de navegador com Playwright e uma rotina do GitHub Actions que roda a cada envio de código e em pull requests.
+No Windows PowerShell, use `$env:GEMINI_API_KEY="sua-chave"` e `$env:ATLAS_AI_ENABLED="true"` antes de `npm run start:api`.
 
-Para executar localmente, com Node.js instalado:
+O servidor usa `gemini-2.5-flash` por padrão; é possível alterar o modelo pela variável `GEMINI_MODEL`. A IA permanece desativada por padrão, mesmo que a chave esteja configurada: é necessário ativar explicitamente `ATLAS_AI_ENABLED=true`.
 
-1. Execute `npm install`.
-2. Execute `npx playwright install chromium`.
-3. Execute `npm run test:syntax` para verificar a sintaxe JavaScript.
-4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda, adaptação de tela, acessibilidade do menu, recursos planejados e controles de voz.
+O servidor limita solicitações por endereço e tamanho de mensagem, restringe a origem padrão a `http://127.0.0.1:4173) e não registra mensagens nem chaves. Não exponha esse servidor diretamente à internet. Para hospedar publicamente, configure um backend protegido e ajuste a origem permitida para o domínio real do ATLAS. A configuração local com `127.0.0.1` não é, sozinha, uma implantação pública.
+
+A API gratuita do Gemini tem limites e condições próprias. O código não garante uso ilimitado nem impede que o provedor aplique limites ou altere a disponibilidade.
+
+## Interface e recursos
+
+- Núcleo circular azul/ciano e layout responsivo.
+- Navegação lateral, menu principal, configurações e ajuda.
+- Conversa e histórico armazenados localmente no navegador.
+- Reconhecimento e síntese de voz dependentes do navegador.
+- O microfone não é uma escuta contínua; depende de permissão e suporte do navegador.
+
+## Testes
+
+```sh
+npm install
+npx playwright install chromium
+npm run test:syntax
+npm test
+```
+
+Os testes de interface simulam a resposta da API para não consumir a cota real do Gemini.
 
 ## Arquivos principais
 
-- `index.html` — estrutura da página e estilos.
-- `app.js` — interações de demonstração por texto, navegação e voz.
-
-O reconhecimento de fala e a síntese de voz são independentes da futura integração com IA: neste momento, o ATLAS ainda responde com frases demonstrativas. O reconhecimento depende do navegador e pode usar serviços do próprio navegador; não é um sistema de escuta contínua nem funciona com o dispositivo desligado. A integração futura com assistente doméstico/wake word será uma etapa separada.
-
-
-## Menu lateral (versão 0.2)
-
-O botão de três linhas abre o menu principal. Início, Nova conversa, Voz, Configurações e Ajuda têm ações implementadas. Histórico mostra as limitações do histórico local atual; Memória e Laboratório aparecem identificados como recursos planejados, sem fingir que já funcionam. O menu pode ser fechado pelo botão, pelo fundo escurecido ou pela tecla Escape.
+- `index.html` — estrutura e estilos.
+- `app.js` — interação da interface e envio de mensagens ao backend.
+- `server.js` — ponte protegida para a API do Gemini.
+- `tests/atlas.spec.js` — testes de navegador.
