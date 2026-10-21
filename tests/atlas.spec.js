@@ -78,3 +78,32 @@ test("menu informa quais recursos ainda estão planejados", async ({ page }) => 
   await expect(page.locator("#feature-heading")).toHaveText("Laboratório");
   await expect(page.locator("#feature-state")).toContainText("AINDA DESATIVADO");
 });
+
+test("botão de voz alterna entre ouvir e parar", async ({ page }) => {
+  await page.evaluate(() => {
+    window.__mockRecognition = null;
+    window.SpeechRecognition = class {
+      constructor() { window.__mockRecognition = this; }
+      start() {}
+      stop() { if (this.onend) this.onend(); }
+    };
+  });
+  const mic = page.getByRole("button", { name: "Áudio" });
+  await expect(mic).toHaveAttribute("aria-pressed", "false");
+  await mic.click();
+  await expect(page.getByRole("button", { name: "Parar de ouvir" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".status")).toContainText("Ouvindo");
+  await page.getByRole("button", { name: "Parar de ouvir" }).click();
+  await expect(page.getByRole("button", { name: "Áudio" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".hint")).toContainText("Parei de ouvir");
+});
+
+test("voz informa quando o navegador não oferece reconhecimento", async ({ page }) => {
+  await page.evaluate(() => {
+    delete window.SpeechRecognition;
+    delete window.webkitSpeechRecognition;
+  });
+  await page.getByRole("button", { name: "Áudio" }).click();
+  await expect(page.locator(".status")).toContainText("indisponível");
+  await expect(page.locator(".hint")).toContainText("não oferece reconhecimento de voz");
+});
