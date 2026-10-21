@@ -36,6 +36,9 @@
       display: grid; place-items: center; cursor: pointer;
       transition: border-color .2s, background .2s, transform .2s;
     }
+    .nav-button.voice-listening { border-color: rgba(70,231,255,.95); background: rgba(36,123,255,.32); color:#fff; box-shadow:0 0 0 4px rgba(70,231,255,.1), 0 0 22px rgba(70,231,255,.24); animation: voice-pulse 1.4s ease-in-out infinite; }
+    @keyframes voice-pulse { 50% { box-shadow:0 0 0 7px rgba(70,231,255,.04), 0 0 28px rgba(70,231,255,.38); } }
+
     .nav-button:hover, .nav-button:focus-visible {
       border-color: var(--cyan); background: rgba(27, 103, 170, .3); transform: translateY(-2px);
       outline: none;
