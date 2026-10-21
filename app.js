@@ -140,7 +140,10 @@
       menuToggle.setAttribute("aria-expanded", String(open));
       menuToggle.setAttribute("aria-label", open ? "Fechar menu ATLAS" : "Abrir menu ATLAS");
     }
-    if (sideMenu) sideMenu.setAttribute("aria-hidden", String(!open));
+    if (sideMenu) {
+      sideMenu.setAttribute("aria-hidden", String(!open));
+      sideMenu.inert = !open;
+    }
     if (open) sideMenu?.querySelector("button")?.focus();
     else menuToggle?.focus();
   };
