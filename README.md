@@ -20,6 +20,17 @@ Protótipo inicial da interface do **ATLAS**, um assistente virtual em desenvolv
 
 Esta é uma **demonstração local**. As respostas de texto são pré-programadas e o recurso de voz depende do suporte do navegador. O projeto ainda não está conectado a um modelo de inteligência artificial, não possui memória de conversas e não envia mensagens a um servidor.
 
+## Testes automatizados
+
+O repositório inclui testes de navegador com Playwright e uma rotina do GitHub Actions que roda a cada envio de código e em pull requests.
+
+Para executar localmente, com Node.js instalado:
+
+1. Execute `npm install`.
+2. Execute `npx playwright install chromium`.
+3. Execute `npm run test:syntax` para verificar a sintaxe JavaScript.
+4. Execute `npm test` para abrir a interface em um navegador automatizado e testar conversa, histórico, configurações, ajuda e adaptação de tela.
+
 ## Arquivos principais
 
 - `index.html` — estrutura da página e estilos.
