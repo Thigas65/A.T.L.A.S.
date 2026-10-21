@@ -292,6 +292,43 @@
       .orbit, .core-wrap::before, .core-wrap::after { animation:none !important; }
     }
 
+    /* Modo TV: experiência visual sem controles laterais ou dependência de toque. */
+    body.tv-mode, body.tv-mode .app {
+      width: 100%; min-width: 0; min-height: 100vh; height: 100vh; overflow: hidden;
+    }
+    body.tv-mode .app { display: block; padding: 0; margin: 0; }
+    body.tv-mode .rail, body.tv-mode .right-panel, body.tv-mode .menu-toggle,
+    body.tv-mode .side-menu, body.tv-mode .menu-backdrop, body.tv-mode .eyebrow,
+    body.tv-mode main > h1, body.tv-mode main > .subtitle, body.tv-mode .view-title,
+    body.tv-mode .chat-panel, body.tv-mode .feature-placeholder, body.tv-mode .settings-panel,
+    body.tv-mode .wake-word-toggle, body.tv-mode #voice-permission-note,
+    body.tv-mode .hint { display: none !important; }
+    body.tv-mode main {
+      box-sizing: border-box; width: 100%; height: 100vh; min-height: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      gap: 0; padding: 8vh 3vw 4vh; overflow: hidden;
+    }
+    body.tv-mode .core-wrap {
+      width: min(52vh, 52vw, 680px); height: min(52vh, 52vw, 680px);
+      margin: 1vh auto 0; flex: 0 0 auto;
+    }
+    body.tv-mode .core { width: 47%; height: 47%; }
+    body.tv-mode .status {
+      position: absolute; bottom: 4vh; left: 0; right: 0; margin: 0 auto;
+      width: max-content; max-width: 80vw; font-size: clamp(12px, 1.2vw, 18px);
+      letter-spacing: .14em; text-align: center;
+    }
+    body.tv-mode .status-dot { box-shadow: 0 0 14px #37e7ff; }
+    body.tv-mode .tv-mode-label {
+      display: block; margin-top: 1vh; color: rgba(166,231,255,.78);
+      font-size: clamp(11px, 1.15vw, 16px); letter-spacing: .42em;
+      text-transform: uppercase; text-align: center;
+    }
+    .tv-mode-label { display: none; }
+    body.tv-mode::after {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at 50% 38%, rgba(0,174,255,.08), transparent 52%);
+    }
   </style>
 </head>
 <body>
@@ -346,6 +383,7 @@
       <h1>ATLAS</h1>
       <p class="subtitle">Seu assistente. Seu universo.</p>
       <div class="status"><span class="status-dot"></span><span>Sistema visual inicializado</span></div>
+      <div class="tv-mode-label" aria-hidden="true">ATLAS CORE · VISUALIZAÇÃO</div>
       <div class="hint" aria-live="polite">Interface inicial · voz e comandos em desenvolvimento</div>
       <button class="wake-word-toggle" id="wake-word-toggle" type="button" aria-pressed="false">Ativar palavra-chave “Atlas”</button>
       <p class="permission-note" id="voice-permission-note">Ao ativar, o navegador pedirá acesso ao microfone. A escuta funciona enquanto esta página estiver aberta e visível.</p>
