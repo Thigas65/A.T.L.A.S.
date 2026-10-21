@@ -327,7 +327,7 @@
     saveChatHistory();
   };
 
-  const API_URL = window.ATLAS_API_URL || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8787/api/chat" : "/.netlify/functions/chat");
+  const API_URL = window.ATLAS_API_URL || "/api/chat";
 
   const sendDemoMessage = async (message) => {
     addChatMessage(message, "user");
