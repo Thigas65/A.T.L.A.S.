@@ -53,8 +53,8 @@
     .nav-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
     main { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: clamp(58px, 8vh, 104px) 16px 24px; overflow-y: auto; }
     .core-wrap { transition: filter .3s, transform .3s; }
-    .core { transition: box-shadow .3s, filter .3s; }
-    .core-mark { width: 58%; height: 58%; display: grid; place-items: center; }
+    .core { transition: filter .3s; }
+    .core-mark { width: 100%; height: 100%; display: grid; place-items: center; }
     .core-mark svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 7px rgba(255,255,255,.45)); }
     .core-mark .nucleus-spin { transform-origin: 50px 50px; animation: nucleus-spin 8s linear infinite; }
     .core-mark .nucleus-counterspin { transform-origin: 50px 50px; animation: nucleus-spin 5s linear infinite reverse; }
@@ -70,21 +70,15 @@
     .setting-row { gap: 14px; }
     .setting-row input[type="checkbox"] { accent-color: var(--cyan); }
     .eyebrow { color: var(--muted); text-transform: uppercase; letter-spacing: .28em; font-size: 11px; margin-bottom: 22px; }
-    .core-wrap { position: relative; width: clamp(190px, 30vw, 310px); aspect-ratio: 1; display: grid; place-items: center; margin-bottom: 28px; }
+    .core-wrap { position: relative; width: clamp(250px, 43vw, 430px); aspect-ratio: 1; display: grid; place-items: center; margin-bottom: 28px; transform: translateY(-5cm); }
     .orbit { position: absolute; inset: 0; border: 1px solid rgba(70, 231, 255, .24); border-radius: 50%; animation: rotate 18s linear infinite; }
     .orbit::before, .orbit::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 18px var(--cyan); }
     .orbit::before { top: 13%; left: 19%; }
     .orbit::after { right: 9%; bottom: 27%; width: 5px; height: 5px; }
     .orbit.two { inset: 15%; border-color: rgba(36, 123, 255, .42); animation-direction: reverse; animation-duration: 12s; }
-    .core {
-      width: 66%; aspect-ratio: 1; border-radius: 50%;
-      display: grid; place-items: center; position: relative;
-      background: radial-gradient(circle at 36% 28%, #7ff4ff 0%, #20bce9 17%, #1265d6 48%, #071a45 76%);
-      border: 1px solid rgba(138, 245, 255, .9);
-      box-shadow: 0 0 25px rgba(36, 193, 255, .55), 0 0 75px rgba(20, 112, 255, .32), inset 0 0 25px rgba(151, 247, 255, .32);
-    }
-    .core::before { content: ""; position: absolute; inset: 9%; border: 1px solid rgba(205, 252, 255, .42); border-radius: 50%; }
-    .core-mark { font-size: clamp(32px, 6vw, 58px); font-weight: 300; letter-spacing: -.1em; padding-right: .1em; text-shadow: 0 0 18px rgba(255,255,255,.6); }
+    .core { width: 100%; height: 100%; aspect-ratio: 1; display: grid; place-items: center; position: relative; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+    .core::before { content: none; }
+    .core-mark { font-size: 0; font-weight: 300; letter-spacing: 0; padding: 0; text-shadow: none; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 52px); font-weight: 600; letter-spacing: .26em; padding-left: .26em; }
     .subtitle { margin: 12px 0 0; color: #a9c5e4; font-size: 14px; letter-spacing: .04em; }
     .status { margin-top: 30px; display: inline-flex; align-items: center; gap: 9px; color: #9ab8d6; font-size: 12px; }
@@ -374,37 +368,39 @@
       <h2 class="view-title" id="view-title">Conversas</h2>
       <div class="eyebrow">Sistema de assistência inteligente</div>
       <div class="core-wrap" id="atlas-core" aria-label="Núcleo visual do ATLAS">
-        <div class="orbit"></div>
-        <div class="orbit two"></div>
         <div class="core">
           <span class="core-mark" aria-hidden="true">
-            <svg viewBox="0 0 100 100" role="img" aria-label="Esfera holográfica circular vazia do ATLAS">
+            <svg viewBox="0 0 100 100" role="img" aria-label="Filamentos holográficos azuis entrelaçados, com centro vazio">
               <defs>
                 <radialGradient id="atlasGlow">
-                  <stop offset="0%" stop-color="#087cff" stop-opacity=".08"/>
-                  <stop offset="75%" stop-color="#004cff" stop-opacity=".04"/>
-                  <stop offset="100%" stop-color="#004cff" stop-opacity="0"/>
+                  <stop offset="0%" stop-color="#075bff" stop-opacity=".12"/>
+                  <stop offset="70%" stop-color="#075bff" stop-opacity=".05"/>
+                  <stop offset="100%" stop-color="#075bff" stop-opacity="0"/>
                 </radialGradient>
+                <filter id="atlasFilamentGlow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation=".65" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
               </defs>
-              <circle cx="50" cy="50" r="39" fill="url(#atlasGlow)"/>
-              <g class="nucleus-spin" fill="none" stroke-linecap="round">
-                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#00dfff" stroke-width="1.1" opacity=".9"/>
-                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#168bff" stroke-width=".7" transform="rotate(28 50 50)" opacity=".9"/>
-                <ellipse cx="50" cy="50" rx="38" ry="25" stroke="#37caff" stroke-width=".65" transform="rotate(55 50 50)" opacity=".75"/>
-                <path d="M13 48 C20 12 71 7 87 40 S65 90 28 78 S13 48 50 23 S91 54 55 82 S8 57 40 20 S90 37 82 66 S34 90 16 59 S53 4 78 29 S53 89 23 67" stroke="#00cfff" stroke-width=".65" opacity=".8"/>
-                <path d="M16 39 C31 7 77 18 84 48 S57 89 25 71 S21 25 56 17 S89 52 65 75 S15 69 27 38 S73 17 85 53" stroke="#168bff" stroke-width=".7" opacity=".85"/>
+              <circle cx="50" cy="50" r="40" fill="url(#atlasGlow)"/>
+              <g class="nucleus-spin" fill="none" stroke-linecap="round" filter="url(#atlasFilamentGlow)">
+                <path d="M8 48 C10 29 31 11 51 13 C70 14 91 30 92 48 C93 66 70 85 51 87 C31 89 9 68 8 48Z" stroke="#168bff" stroke-width=".42" opacity=".75"/>
+                <path d="M13 42 C23 17 56 7 76 27 C95 46 76 75 51 80 C28 85 4 61 17 39 C30 17 63 18 82 42 C97 62 67 88 43 77 C21 67 18 40 39 25 C60 10 86 34 79 56 C71 78 39 83 22 62 C6 42 27 15 51 20 C75 25 91 53 69 70 C48 87 17 66 22 44 C27 22 55 10 74 30 C93 50 75 73 51 75 C28 77 11 53 27 34 C43 15 69 23 78 44 C87 65 58 84 36 70 C14 56 20 28 44 22 C66 16 87 39 76 60" stroke="#00dfff" stroke-width=".62" opacity=".95"/>
+                <path d="M17 31 C37 8 67 16 83 35 C98 54 77 79 55 84 C30 90 8 68 16 47 C25 25 53 14 72 31 C92 49 75 73 52 76 C29 79 12 55 27 36 C42 17 68 25 79 45 C90 65 65 84 43 73 C21 62 21 35 42 24 C63 13 85 34 81 53 C77 72 50 82 31 66 C12 50 27 25 49 22 C71 19 88 43 73 61 C58 79 32 70 25 51" stroke="#147bff" stroke-width=".48" opacity=".95"/>
+                <path d="M11 55 C15 34 38 18 59 22 C80 26 91 48 78 66 C64 85 37 82 22 65 C8 49 20 25 42 18 C65 11 87 32 84 52 C81 72 54 85 34 72 C14 59 19 32 40 24 C61 16 81 34 77 52 C73 71 48 78 31 63 C14 48 28 28 46 28 C64 28 78 45 69 60" stroke="#54eaff" stroke-width=".38" opacity=".8"/>
               </g>
               <g class="nucleus-counterspin" fill="none" stroke-linecap="round">
-                <ellipse cx="50" cy="50" rx="27" ry="38" stroke="#00eaff" stroke-width=".8" opacity=".85"/>
-                <ellipse cx="50" cy="50" rx="21" ry="37" stroke="#4aeaff" stroke-width=".65" transform="rotate(35 50 50)" opacity=".8"/>
-                <ellipse cx="50" cy="50" rx="21" ry="37" stroke="#126dff" stroke-width=".65" transform="rotate(-35 50 50)" opacity=".8"/>
+                <path d="M50 9 C66 19 80 33 80 50 C80 67 65 81 50 91 C35 81 20 67 20 50 C20 33 35 19 50 9Z" stroke="#00cfff" stroke-width=".42" opacity=".72"/>
+                <path d="M31 13 C49 25 67 34 74 50 C67 66 49 75 31 87 C24 70 18 59 24 43 C30 28 45 17 62 13 C75 25 82 38 76 55 C69 72 52 82 36 85 C22 69 18 53 26 38 C34 23 49 17 68 19" stroke="#178cff" stroke-width=".45" opacity=".9"/>
               </g>
-              <g fill="#e9fdff">
-                <circle cx="50" cy="12" r="1.2"/><circle cx="84" cy="39" r="1.1"/>
-                <circle cx="20" cy="67" r="1.1"/><circle cx="70" cy="82" r="1.1"/>
-                <circle cx="13" cy="47" r=".9"/><circle cx="76" cy="22" r=".9"/>
+              <g fill="#bdfaff">
+                <circle cx="25" cy="27" r=".55"/><circle cx="76" cy="30" r=".6"/>
+                <circle cx="17" cy="54" r=".55"/><circle cx="78" cy="66" r=".6"/>
+                <circle cx="49" cy="13" r=".65"/><circle cx="54" cy="86" r=".65"/>
+                <circle cx="34" cy="75" r=".45"/><circle cx="68" cy="21" r=".45"/>
               </g>
-            </svg>      </svg>         </span>
+            </svg>
+          </span>
         </div>
       </div>
       <h1>ATLAS</h1>
