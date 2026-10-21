@@ -109,3 +109,13 @@ test("voz informa quando o navegador não oferece reconhecimento", async ({ page
   await expect(page.locator(".status")).toContainText("indisponível");
   await expect(page.locator(".hint")).toContainText("não oferece reconhecimento de voz");
 });
+
+test("shows saved conversation messages in the History menu", async ({ page }) => {
+  await page.locator("#chat-input").fill("Lembrar esta mensagem");
+  await page.locator("#chat-input").press("Enter");
+  await page.locator("#menu-toggle").click();
+  await page.getByRole("button", { name: "Histórico" }).click();
+  await expect(page.locator("#feature-heading")).toHaveText("Histórico");
+  await expect(page.locator(".history-list")).toContainText("Lembrar esta mensagem");
+  await expect(page.locator(".history-list")).toContainText("ATLAS:");
+});
