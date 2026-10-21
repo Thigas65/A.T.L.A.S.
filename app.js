@@ -296,6 +296,15 @@
   const chatLog = document.querySelector("#chat-log");
   const clearChatButton = document.querySelector("#clear-chat");
   const voiceEnabled = document.querySelector("#voice-enabled");
+  voiceEnabled?.addEventListener("change", () => {
+    if (!voiceEnabled.checked && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      coreWrap?.classList.remove("is-speaking");
+      showMessage("Respostas faladas desativadas. Você pode reativá-las nas configurações.");
+    } else if (voiceEnabled.checked) {
+      showMessage("Respostas faladas ativadas.");
+    }
+  });
 
   const menuToggle = document.querySelector("#menu-toggle");
   const menuBackdrop = document.querySelector("#menu-backdrop");
