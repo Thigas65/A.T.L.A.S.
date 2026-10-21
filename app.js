@@ -70,7 +70,7 @@
         if (title) title.textContent = "Ajuda";
         if (panelHeading) panelHeading.textContent = "Como testar o ATLAS";
         if (panelDescription) panelDescription.textContent = "Digite uma mensagem na área Conversas. O microfone tenta reconhecer sua fala, se o navegador suportar e você autorizar o acesso.";
-        if (footnote) footnote.textContent = "As respostas são pré-programadas. O ATLAS ainda não está conectado a uma inteligência artificial real.";
+        if (footnote) footnote.textContent = "O chat está preparado para usar o Gemini quando o servidor e a chave estiverem configurados.";
         showMessage("Ajuda do ATLAS.");
       } else {
         if (title) title.textContent = "";
@@ -261,7 +261,7 @@
         document.querySelector("#view-title").textContent = "Ajuda e sobre";
         document.querySelector("#panel-heading").textContent = "Como testar o ATLAS";
         document.querySelector("#panel-description").textContent = "Digite uma mensagem na área Conversas. O microfone tenta reconhecer sua fala se o navegador suportar e você autorizar o acesso.";
-        document.querySelector("#panel-footnote").textContent = "Versão 0.2 · respostas pré-programadas · IA real ainda não conectada.";
+        document.querySelector("#panel-footnote").textContent = "Versão 0.3 · integração com Gemini preparada; requer servidor e chave configurados.";
         document.querySelector("#voice-setting-row").style.display = "none";
       } else if (featureCopy[action]) {
         app.classList.add("feature-mode");
