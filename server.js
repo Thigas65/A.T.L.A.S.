@@ -66,7 +66,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", build: "atlas-diagnostics-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "gemini-3.5-flash", build: "atlas-diagnostics-1" });
     return;
   }
 
@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
     if (!apiKey) {
       sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
       return;
@@ -161,7 +161,7 @@ const server = http.createServer(async (req, res) => {
       });
 
       if (!response.ok) {
-        // Log only the HTTP status; never log the API key or provider response body.
+        // Log the HTTP status and a short provider error explanation; never log the API key.
         let providerMessage = "sem detalhe";
         try {
           const providerBody = await response.clone().json();
