@@ -309,6 +309,8 @@
         showMessage("Nova conversa iniciada.");
         chatInput?.focus();
       } else if (action === "history") {
+        featurePanel.querySelector(".memory-manager")?.remove();
+        featurePanel.querySelector(".tools-note")?.remove();
         app.classList.add("feature-mode");
         document.querySelector("#view-title").textContent = "Histórico";
         featureHeading.textContent = featureCopy.history[0];
@@ -342,6 +344,7 @@
         featureHeading.textContent = featureCopy[action][0];
         featureDescription.textContent = featureCopy[action][1];
         featureState.textContent = featureCopy[action][2];
+        featurePanel.querySelector(".history-list")?.remove();
         featurePanel.querySelector(".memory-manager")?.remove();
         featurePanel.querySelector(".tools-note")?.remove();
         if (action === "memory") {
