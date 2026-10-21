@@ -7,6 +7,7 @@
     "test": "npm run test:function && playwright test",
     "test:function": "node --test tests/netlify-function.test.js",
     "test:syntax": "node --check app.js && node --check netlify/functions/chat.js",
+    "start": "node server.js",
     "start:api": "node server.js"
   },
   "devDependencies": {
