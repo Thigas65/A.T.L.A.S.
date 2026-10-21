@@ -303,11 +303,7 @@
         showMessage("Você está na tela inicial do ATLAS.");
         if (status) status.textContent = "Sistema visual inicializado";
       } else if (action === "new-chat") {
-        if (chatHistory.length) {
-          chatHistory = [];
-          renderChatHistory();
-          try { localStorage.removeItem(historyKey); } catch (_) {}
-        }
+        startNewConversation();
         app.classList.add("chat-mode");
         document.querySelector("#view-title").textContent = "Nova conversa";
         showMessage("Nova conversa iniciada.");
@@ -316,28 +312,9 @@
         app.classList.add("feature-mode");
         document.querySelector("#view-title").textContent = "Histórico";
         featureHeading.textContent = featureCopy.history[0];
-        featureDescription.textContent = chatHistory.length
-          ? "Mensagens salvas neste navegador (" + chatHistory.length + "). O histórico não é enviado para nenhum servidor."
-          : "Ainda não há mensagens salvas neste navegador. Comece uma conversa para ela aparecer aqui.";
-        featureState.textContent = chatHistory.length
-          ? "HISTÓRICO LOCAL · " + chatHistory.length + " MENSAGENS"
-          : "NENHUMA MENSAGEM SALVA";
-        const previousList = featurePanel.querySelector(".history-list");
-        if (previousList) previousList.remove();
-        if (chatHistory.length) {
-          const list = document.createElement("ol");
-          list.className = "history-list";
-          chatHistory.forEach((message) => {
-            const item = document.createElement("li");
-            const speaker = document.createElement("strong");
-            speaker.textContent = message.who === "user" ? "Você: " : "ATLAS: ";
-            const content = document.createElement("span");
-            content.textContent = message.text;
-            item.append(speaker, content);
-            list.appendChild(item);
-          });
-          featurePanel.appendChild(list);
-        }
+        featureDescription.textContent = "Suas conversas ficam salvas apenas neste navegador. Toque em uma conversa para continuar.";
+        featureState.textContent = "CONVERSAS SALVAS: " + chatSessions.length;
+        renderConversationList();
       } else if (action === "voice") {
         app.classList.add("settings-mode");
         document.querySelector("#view-title").textContent = "Voz";
@@ -393,8 +370,36 @@
     });
   }
   const historyKey = "atlas-demo-chat-v1";
+  const sessionsKey = "atlas-conversations-v1";
+  let chatSessions = [];
+  let activeSessionId = "";
   let chatHistory = [];
 
+  const createSession = (title = "Nova conversa") => ({
+    id: "atlas-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7),
+    title,
+    updatedAt: Date.now(),
+    messages: []
+  });
+  const getActiveSession = () => chatSessions.find((session) => session.id === activeSessionId);
+  const saveSessions = () => {
+    try {
+      window.localStorage.setItem(sessionsKey, JSON.stringify(chatSessions.slice(0, 30)));
+      return true;
+    } catch (_) {
+      showMessage("Não foi possível salvar o histórico neste navegador.");
+      return false;
+    }
+  };
+  const saveChatHistory = () => {
+    const active = getActiveSession();
+    if (active) {
+      active.messages = chatHistory.slice(-40);
+      active.updatedAt = Date.now();
+    }
+    saveSessions();
+    try { window.localStorage.setItem(historyKey, JSON.stringify(chatHistory.slice(-40))); } catch (_) {}
+  };
   const renderChatHistory = () => {
     if (!chatLog) return;
     chatLog.replaceChildren();
@@ -406,31 +411,102 @@
     });
     chatLog.scrollTop = chatLog.scrollHeight;
   };
-
-  const saveChatHistory = () => {
-    try {
-      window.localStorage.setItem(historyKey, JSON.stringify(chatHistory.slice(-40)));
-    } catch (_) {
-      showMessage("Não foi possível salvar a conversa neste navegador.");
+  const switchConversation = (id) => {
+    const target = chatSessions.find((session) => session.id === id);
+    if (!target) return;
+    activeSessionId = target.id;
+    chatHistory = target.messages.slice(-40);
+    renderChatHistory();
+    saveSessions();
+    document.querySelector(".app")?.classList.add("chat-mode");
+    document.querySelector("#view-title").textContent = target.title;
+    showMessage("Conversa aberta.");
+    if (status) status.textContent = "Histórico carregado";
+    chatInput?.focus();
+  };
+  const startNewConversation = () => {
+    const session = createSession();
+    chatSessions.unshift(session);
+    chatSessions = chatSessions.slice(0, 30);
+    activeSessionId = session.id;
+    chatHistory = session.messages;
+    renderChatHistory();
+    saveSessions();
+  };
+  const renderConversationList = () => {
+    if (!featurePanel) return;
+    featurePanel.querySelector(".history-list")?.remove();
+    const list = document.createElement("div");
+    list.className = "history-list";
+    list.style.cssText = "display:grid;gap:10px;margin-top:16px";
+    if (!chatSessions.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "Nenhuma conversa salva ainda. Comece uma nova conversa.";
+      list.appendChild(empty);
     }
+    chatSessions.slice().sort((a, b) => b.updatedAt - a.updatedAt).forEach((session) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.style.cssText = "text-align:left;padding:12px;border-radius:10px;border:1px solid rgba(0,190,255,.4);background:#06152c;color:#fff;cursor:pointer";
+      const title = document.createElement("strong");
+      title.textContent = session.title || "Conversa";
+      const detail = document.createElement("small");
+      detail.style.cssText = "display:block;margin-top:5px;color:#a9d8f7";
+      detail.textContent = session.messages.length + " mensagens · " + new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(session.updatedAt));
+      button.append(title, detail);
+      button.addEventListener("click", () => switchConversation(session.id));
+      list.appendChild(button);
+    });
+    const clearAll = document.createElement("button");
+    clearAll.type = "button";
+    clearAll.textContent = "Apagar todo o histórico";
+    clearAll.style.cssText = "padding:10px;border-radius:10px;border:1px solid #b54a67;background:#391326;color:#fff;cursor:pointer";
+    clearAll.addEventListener("click", () => {
+      chatSessions = [];
+      startNewConversation();
+      chatHistory = [];
+      renderChatHistory();
+      saveChatHistory();
+      featureState.textContent = "HISTÓRICO APAGADO";
+      featureDescription.textContent = "O histórico anterior foi apagado deste navegador.";
+      renderConversationList();
+    });
+    list.appendChild(clearAll);
+    featurePanel.appendChild(list);
   };
 
   try {
-    const saved = JSON.parse(window.localStorage.getItem(historyKey) || "[]");
-    if (Array.isArray(saved)) {
-      chatHistory = saved.filter((item) =>
-        item && (item.who === "user" || item.who === "atlas") &&
-        typeof item.text === "string"
-      ).slice(-40);
+    const savedSessions = JSON.parse(window.localStorage.getItem(sessionsKey) || "null");
+    if (Array.isArray(savedSessions)) {
+      chatSessions = savedSessions.filter((session) => session && typeof session.id === "string" && Array.isArray(session.messages))
+        .map((session) => ({
+          id: session.id,
+          title: typeof session.title === "string" ? session.title.slice(0, 60) : "Conversa",
+          updatedAt: Number(session.updatedAt) || Date.now(),
+          messages: session.messages.filter((item) => item && (item.who === "user" || item.who === "atlas") && typeof item.text === "string").slice(-40)
+        })).slice(0, 30);
+    }
+    if (!chatSessions.length) {
+      const legacy = JSON.parse(window.localStorage.getItem(historyKey) || "[]");
+      const first = createSession(legacy.length ? "Conversa anterior" : "Nova conversa");
+      first.messages = Array.isArray(legacy) ? legacy.filter((item) => item && (item.who === "user" || item.who === "atlas") && typeof item.text === "string").slice(-40) : [];
+      chatSessions = [first];
     }
   } catch (_) {
-    chatHistory = [];
+    chatSessions = [createSession()];
   }
+  activeSessionId = chatSessions[0].id;
+  chatHistory = chatSessions[0].messages.slice(-40);
   renderChatHistory();
+  saveSessions();
 
   const addChatMessage = (text, who) => {
     chatHistory.push({ text, who });
     chatHistory = chatHistory.slice(-40);
+    const active = getActiveSession();
+    if (active && who === "user" && active.messages.length === 0) {
+      active.title = text.slice(0, 42) + (text.length > 42 ? "…" : "");
+    }
     renderChatHistory();
     saveChatHistory();
   };
