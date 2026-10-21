@@ -223,7 +223,7 @@
     .feature-copy strong { font-size:clamp(13px,1.05vw,17px); font-weight:600; white-space:nowrap; }
     .feature-copy small { color:#b0d3f3; font-size:clamp(10px,.8vw,13px); line-height:1.6; }
     .feature-arrow { margin-left:auto; font-size:34px; font-weight:300; color:#8cdcff; }
-    .menu-toggle { z-index:50; top:18px; left:18px; width:42px; height:42px; opacity:0; pointer-events:none; }
+    .menu-toggle { z-index:50; top:18px; left:18px; width:42px; height:42px; opacity:1; pointer-events:auto; }
     .side-menu { z-index:60; }
     .app.chat-mode main, .app.settings-mode main, .app.help-mode main, .app.feature-mode main { justify-content:flex-start; padding-top:clamp(24px,7vh,64px); }
     .app.chat-mode .core-wrap, .app.settings-mode .core-wrap, .app.help-mode .core-wrap, .app.feature-mode .core-wrap { display:none; }
@@ -332,7 +332,7 @@
           <label class="sr-only" for="chat-input">Mensagem para o ATLAS</label>
           <button class="nav-button chat-mic" type="button" aria-label="Áudio" title="Falar com o ATLAS"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg></button><input id="chat-input" name="message" type="text" maxlength="500" placeholder="Fale com o ATLAS..." autocomplete="off">
           <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4M7 6v12M11 3v18M15 7v10M19 5v14M23 9v6"/></svg>
           </button>
         </form>
         <p class="chat-note"> </p>
