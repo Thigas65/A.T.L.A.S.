@@ -74,7 +74,8 @@
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
         if (chatInput) {
-          sendDemoMessage(transcript);
+          const answer = sendDemoMessage(transcript);
+          say(answer);
         } else {
           showMessage("Você: “" + transcript + "”");
           respond(transcript);
