@@ -332,32 +332,97 @@
   const sendDemoMessage = async (message) => {
     addChatMessage(message, "user");
     showMessage("Conectando ao Gemini…");
-    if (status) status.textContent = "Aguardando resposta do Gemini";
+    if (status) status.textContent = "O ATLAS está começando a responder…";
     if (chatInput) chatInput.disabled = true;
 
+    let streamedAnswer = "";
+    let liveMessage = null;
     try {
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream"
+        },
+        body: JSON.stringify({ message, stream: true }),
         signal: AbortSignal.timeout(35_000)
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Não foi possível obter uma resposta do Gemini.");
-      if (typeof data.answer !== "string" || !data.answer.trim()) {
-        throw new Error("O Gemini não retornou uma resposta válida.");
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Não foi possível obter uma resposta do Gemini.");
+      }
+      if (!response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
+        const data = await response.json().catch(() => ({}));
+        if (typeof data.answer === "string" && data.answer.trim()) {
+          streamedAnswer = data.answer.trim();
+        } else {
+          throw new Error("O servidor não iniciou a resposta em tempo real.");
+        }
+      } else {
+        liveMessage = document.createElement("div");
+        liveMessage.className = "chat-message atlas";
+        liveMessage.textContent = "";
+        chatLog?.appendChild(liveMessage);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let pending = "";
+        let finished = false;
+
+        const handleEvent = (eventText) => {
+          if (!eventText) return;
+          try {
+            const event = JSON.parse(eventText);
+            if (typeof event.text === "string") {
+              streamedAnswer += event.text;
+              if (liveMessage) liveMessage.textContent = streamedAnswer;
+              if (chatLog) chatLog.scrollTop = chatLog.scrollHeight;
+              showMessage("O ATLAS está escrevendo…");
+              if (status) status.textContent = "Gerando resposta";
+            }
+            if (event.error) throw new Error(event.error);
+            if (event.done) finished = true;
+          } catch (error) {
+            if (error instanceof SyntaxError) return;
+            throw error;
+          }
+        };
+
+        while (!finished) {
+          const { value, done } = await reader.read();
+          pending += decoder.decode(value || new Uint8Array(), { stream: !done });
+          const events = pending.split(/\r?\n\r?\n/);
+          pending = events.pop() || "";
+          for (const eventBlock of events) {
+            const data = eventBlock.split(/\r?\n/)
+              .filter((line) => line.startsWith("data:"))
+              .map((line) => line.slice(5).trim())
+              .join("\n");
+            handleEvent(data);
+          }
+          if (done) break;
+        }
+        if (pending.trim()) {
+          const data = pending.split(/\r?\n/)
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trim())
+            .join("\n");
+          handleEvent(data);
+        }
       }
 
-      addChatMessage(data.answer.trim(), "atlas");
+      if (!streamedAnswer.trim()) throw new Error("O Gemini não retornou texto nesta resposta.");
+      addChatMessage(streamedAnswer.trim(), "atlas");
       showMessage("Resposta recebida do Gemini.");
       if (status) status.textContent = "Gemini conectado";
-      return data.answer.trim();
+      return streamedAnswer.trim();
     } catch (error) {
       const messageText = error && error.name === "TimeoutError"
         ? "O Gemini demorou demais para responder. Tente novamente."
         : (error && error.message || "").includes("Failed to fetch")
-          ? "Não consegui acessar a IA. Se o site estiver publicado, confira a função do servidor e a variável GEMINI_API_KEY; se estiver local, inicie o servidor da API."
+          ? "Não consegui acessar a IA. Se o site estiver publicado, confira o servidor e a variável GEMINI_API_KEY."
           : (error && error.message || "Não consegui conectar ao Gemini.");
+      if (liveMessage) liveMessage.remove();
       addChatMessage(messageText, "atlas");
       showMessage(messageText);
       if (status) status.textContent = "Conexão com IA indisponível";
