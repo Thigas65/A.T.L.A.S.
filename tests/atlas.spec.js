@@ -80,7 +80,7 @@ test("menu informa quais recursos ainda estão planejados", async ({ page }) => 
 });
 
 test("botão de voz alterna entre ouvir e parar", async ({ page }) => {
-  await page.evaluate(() => {
+  await page.addInitScript(() => {
     window.__mockRecognition = null;
     window.SpeechRecognition = class {
       constructor() { window.__mockRecognition = this; }
@@ -88,6 +88,7 @@ test("botão de voz alterna entre ouvir e parar", async ({ page }) => {
       stop() { if (this.onend) this.onend(); }
     };
   });
+  await page.reload();
   const mic = page.getByRole("button", { name: "Áudio" });
   await expect(mic).toHaveAttribute("aria-pressed", "false");
   await mic.click();
@@ -99,10 +100,11 @@ test("botão de voz alterna entre ouvir e parar", async ({ page }) => {
 });
 
 test("voz informa quando o navegador não oferece reconhecimento", async ({ page }) => {
-  await page.evaluate(() => {
+  await page.addInitScript(() => {
     delete window.SpeechRecognition;
     delete window.webkitSpeechRecognition;
   });
+  await page.reload();
   await page.getByRole("button", { name: "Áudio" }).click();
   await expect(page.locator(".status")).toContainText("indisponível");
   await expect(page.locator(".hint")).toContainText("não oferece reconhecimento de voz");
