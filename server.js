@@ -119,44 +119,43 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL;
-    if (!apiKey || !model) {
-      sendJson(res, 503, { error: "A integração ainda não foi configurada. Nenhuma chamada foi feita." }, origin);
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    if (!apiKey) {
+      sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
       return;
     }
 
     try {
-      const response = await fetch("https://api.openai.com/v1/responses", {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "x-goog-api-key": apiKey,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model,
-          instructions: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, a menos que o usuário peça outro idioma.",
-          input: message,
-          max_output_tokens: 500
+          systemInstruction: {
+            parts: [{ text: "Você é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, a menos que o usuário peça outro idioma." }]
+          },
+          contents: [{ role: "user", parts: [{ text: message }] }],
+          generationConfig: { maxOutputTokens: 700, temperature: 0.7 }
         }),
         signal: AbortSignal.timeout(30_000)
       });
 
       if (!response.ok) {
-        // Do not relay provider error details or credentials to the browser.
         sendJson(res, response.status === 429 ? 429 : 502, {
           error: response.status === 429
-            ? "O serviço está limitado ou sem cota disponível."
-            : "Não foi possível obter uma resposta da IA."
+            ? "O Gemini atingiu o limite de uso ou a cota disponível."
+            : "Não foi possível obter uma resposta do Gemini. Confira a configuração da API."
         }, origin);
         return;
       }
 
       const data = await response.json();
-      const answer = (data.output || [])
-        .flatMap((item) => item.content || [])
-        .filter((item) => item.type === "output_text")
-        .map((item) => item.text)
+      const answer = (data.candidates?.[0]?.content?.parts || [])
+        .filter((part) => typeof part.text === "string")
+        .map((part) => part.text)
         .join("\n")
         .trim();
 
