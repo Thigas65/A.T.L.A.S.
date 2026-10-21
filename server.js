@@ -66,7 +66,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "gemini-3.6-flash", build: "atlas-diagnostics-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "auto: gemini-3.5-flash-lite (simple) / gemini-3.6-flash (detailed)", build: "atlas-diagnostics-1" });
     return;
   }
 
@@ -125,7 +125,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     const message = body.message.trim();
-    const wantsDetailedAnswer = /\b(detalhad[oa]s?|em detalhes|passo a passo|por etapas|explique melhor|análise|analise|compare|comparação|planeje|código|programação|programar|matemática|matematica|prova|demonstre)\b/i.test(message);
+    const wantsDetailedAnswer = /\b(detalhad[oa]s?|em detalhes|passo a passo|por etapas|explique|explica|como faço|como faco|por que|porque|resolva|calcule|escreva|crie|roteiro|resumo|resuma|desenvolva|análise|analise|compare|comparação|planeje|código|programação|programar|matemática|matematica|prova|demonstre)\b/i.test(message);
     if (message.length > MAX_MESSAGE_CHARS) {
       sendJson(res, 413, { error: "A mensagem deve ter até 4000 caracteres." }, origin);
       return;
@@ -138,7 +138,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+    const model = process.env.GEMINI_MODEL || (wantsDetailedAnswer ? "gemini-3.6-flash" : "gemini-3.5-flash-lite");
     if (!apiKey) {
       sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
       return;
