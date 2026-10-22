@@ -990,6 +990,16 @@
   };
 
   if (chatForm && chatInput) {
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + "px";
+    });
+    chatInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
     chatForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const message = chatInput.value.trim();
@@ -998,6 +1008,7 @@
         return;
       }
       chatInput.value = "";
+      chatInput.style.height = "auto";
       sendDemoMessage(message);
     });
   }
