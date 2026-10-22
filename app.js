@@ -42,8 +42,8 @@
       atlasAudio = null;
     }
     coreWrap?.classList.remove("is-speaking");
+    let voiceIssue = "";
 
-    // Prefer the server-side ElevenLabs voice when configured; keep browser speech as fallback.
     try {
       const response = await fetch("/api/tts", {
         method: "POST",
@@ -56,29 +56,36 @@
         const audioBlob = await response.blob();
         if (requestId !== speechRequestId) return;
         const audioUrl = URL.createObjectURL(audioBlob);
-        atlasAudio = new Audio(audioUrl);
-        atlasAudio.onplay = () => coreWrap?.classList.add("is-speaking");
-        atlasAudio.onended = () => {
+        const audio = new Audio(audioUrl);
+        atlasAudio = audio;
+        audio.onplay = () => coreWrap?.classList.add("is-speaking");
+        audio.onended = () => {
           coreWrap?.classList.remove("is-speaking");
           URL.revokeObjectURL(audioUrl);
-          if (atlasAudio?.src === audioUrl) atlasAudio = null;
+          if (atlasAudio === audio) atlasAudio = null;
         };
-        atlasAudio.onerror = () => {
+        audio.onerror = () => {
           coreWrap?.classList.remove("is-speaking");
           URL.revokeObjectURL(audioUrl);
-          atlasAudio = null;
+          if (atlasAudio === audio) atlasAudio = null;
         };
-        await atlasAudio.play();
+        await audio.play();
+        showMessage("Voz ATLAS: ElevenLabs ativa.");
         return;
       }
-    } catch {
-      // If ElevenLabs isn't configured or is temporarily unavailable, try browser speech.
+      const data = await response.json().catch(() => ({}));
+      voiceIssue = data.error || ("A ElevenLabs respondeu com erro (" + response.status + ").");
+    } catch (error) {
+      voiceIssue = error?.message || "Não foi possível conectar à ElevenLabs.";
     }
     if (requestId !== speechRequestId) return;
     if (!("speechSynthesis" in window)) {
-      showMessage("A voz online não está disponível e este navegador não oferece fala.");
+      showMessage(voiceIssue ? "Falha na ElevenLabs: " + voiceIssue : "A fala não é compatível com este navegador.");
       return;
     }
+    showMessage(voiceIssue
+      ? "A voz da ElevenLabs falhou (" + voiceIssue + "). Usando a voz do navegador por enquanto."
+      : "Usando a voz do navegador por enquanto.");
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "pt-BR";
     utterance.rate = 1;
