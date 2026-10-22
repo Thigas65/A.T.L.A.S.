@@ -222,7 +222,8 @@ const server = http.createServer(async (req, res) => {
     const wantsDetailedAnswer = /\b(detalhad[oa]s?|em detalhes|passo a passo|por etapas|explique|explica|como faço|como faco|por que|porque|resolva|calcule|escreva|crie|roteiro|resumo|resuma|desenvolva|análise|analise|compare|comparação|planeje|código|programação|programar|matemática|matematica|prova|demonstre)\b/i.test(message);
     const hasUserUrl = /https?:\/\/[^\s<>"\x27]+/i.test(message);
     const wantsWebSearch = hasUserUrl || /\b(hoje|agora|atual|atualmente|últim[oa]s?|notícias|noticia|aconteceu|acontecimentos|recente|recentes|lançamento|lançamentos|preço|preços|cotação|resultado|resultados|pesquise|pesquisar|procure|buscar|busque|na internet|na web|fontes|sites|site|quem ganhou|quem venceu|202[5-9])\b/i.test(message);
-    // Disponibiliza busca na web em todas as conversas; o modelo decide quando ela é necessária. URLs do usuário também habilitam contexto de URL.\n    const webTools = [{ google_search: {} }, ...(hasUserUrl ? [{ url_context: {} }] : [])];
+    // A busca na web fica disponível em todas as conversas; URLs fornecidas também habilitam contexto de URL.
+    const webTools = [{ google_search: {} }, ...(hasUserUrl ? [{ url_context: {} }] : [])];
     if (message.length > MAX_MESSAGE_CHARS) {
       sendJson(res, 413, { error: "A mensagem deve ter até 4000 caracteres." }, origin);
       return;
