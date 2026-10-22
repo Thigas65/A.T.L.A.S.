@@ -27,6 +27,10 @@
   const showMessage = (message) => {
     if (hint) hint.textContent = message;
   };
+  const voiceStatus = document.querySelector("#voice-status");
+  const showVoiceStatus = (message) => {
+    if (voiceStatus) voiceStatus.textContent = message;
+  };
 
   let atlasAudio = null;
   let speechRequestId = 0;
@@ -43,6 +47,8 @@
     }
     coreWrap?.classList.remove("is-speaking");
     let voiceIssue = "";
+    const voiceStartedAt = Date.now();
+    showVoiceStatus("Voz: tentando conectar à ElevenLabs…");
 
     try {
       const response = await fetch("/api/tts", {
@@ -70,7 +76,9 @@
           if (atlasAudio === audio) atlasAudio = null;
         };
         await audio.play();
-        showMessage("Voz ATLAS: ElevenLabs ativa.");
+        const elapsed = ((Date.now() - voiceStartedAt) / 1000).toFixed(1).replace(".", ",");
+        showVoiceStatus("Voz: ElevenLabs ativa · áudio gerado em " + elapsed + " s.");
+        showMessage("O ATLAS está usando a voz personalizada da ElevenLabs.");
         return;
       }
       const data = await response.json().catch(() => ({}));
@@ -79,11 +87,14 @@
       voiceIssue = error?.message || "Não foi possível conectar à ElevenLabs.";
     }
     if (requestId !== speechRequestId) return;
+    const elapsed = ((Date.now() - voiceStartedAt) / 1000).toFixed(1).replace(".", ",");
     if (!("speechSynthesis" in window)) {
       coreWrap?.classList.remove("is-speaking");
+      showVoiceStatus("Voz: erro na ElevenLabs após " + elapsed + " s — " + voiceIssue);
       showMessage("A ElevenLabs falhou (" + voiceIssue + ") e este navegador não oferece voz alternativa.");
       return;
     }
+    showVoiceStatus("Voz: navegador (alternativa) · ElevenLabs falhou após " + elapsed + " s — " + voiceIssue);
     showMessage("A ElevenLabs falhou (" + voiceIssue + "). Usando a voz disponível no navegador temporariamente.");
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "pt-BR";
