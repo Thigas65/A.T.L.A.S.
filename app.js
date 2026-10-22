@@ -365,6 +365,12 @@
 
   const chatForm = document.querySelector("#chat-form");
   const chatInput = document.querySelector("#chat-input");
+  const chatAttachButton = document.querySelector("#chat-attach");
+  const chatImageInput = document.querySelector("#chat-image-input");
+  chatAttachButton?.addEventListener("click", () => chatImageInput?.click());
+  chatImageInput?.addEventListener("change", () => {
+    if (chatImageInput.files?.length) showMessage("Imagem selecionada. O envio de imagens para a IA ainda precisa ser conectado.");
+  });
   const chatLog = document.querySelector("#chat-log");
   const clearChatButton = document.querySelector("#clear-chat");
   const voiceEnabled = document.querySelector("#voice-enabled");
