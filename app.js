@@ -79,20 +79,8 @@
       voiceIssue = error?.message || "Não foi possível conectar à ElevenLabs.";
     }
     if (requestId !== speechRequestId) return;
-    if (!("speechSynthesis" in window)) {
-      showMessage(voiceIssue ? "Falha na ElevenLabs: " + voiceIssue : "A fala não é compatível com este navegador.");
-      return;
-    }
-    showMessage(voiceIssue
-      ? "A voz da ElevenLabs falhou (" + voiceIssue + "). Usando a voz do navegador por enquanto."
-      : "Usando a voz do navegador por enquanto.");
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "pt-BR";
-    utterance.rate = 1;
-    utterance.onstart = () => coreWrap?.classList.add("is-speaking");
-    utterance.onend = () => coreWrap?.classList.remove("is-speaking");
-    utterance.onerror = () => coreWrap?.classList.remove("is-speaking");
-    window.speechSynthesis.speak(utterance);
+    coreWrap?.classList.remove("is-speaking");
+    showMessage("Não consegui ativar a voz escolhida da ElevenLabs: " + voiceIssue + ". Não usei a voz antiga do navegador. Confira as configurações da voz no servidor.");
   };
 
   const respond = (text) => {
@@ -173,7 +161,8 @@
     const command = transcript.trim();
     if (!command) return;
     if (chatInput) {
-      chatInput.value = command;
+      // Envia a transcrição sem deixá-la preenchida na barra de digitação.
+      chatInput.value = "";
       await sendDemoMessage(command);
     } else {
       showMessage("Você: “" + command + "”");
