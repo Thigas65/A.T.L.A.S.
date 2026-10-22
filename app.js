@@ -28,15 +28,58 @@
     if (hint) hint.textContent = message;
   };
 
-  const say = (message) => {
+  let atlasAudio = null;
+  let speechRequestId = 0;
+  const say = async (message) => {
     const voiceSetting = document.querySelector("#voice-enabled");
     if (voiceSetting && !voiceSetting.checked) return;
+    const text = String(message || "").trim();
+    if (!text) return;
+    const requestId = ++speechRequestId;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (atlasAudio) {
+      atlasAudio.pause();
+      atlasAudio = null;
+    }
+    coreWrap?.classList.remove("is-speaking");
+
+    // Prefer the server-side ElevenLabs voice when configured; keep browser speech as fallback.
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "audio/mpeg, application/json" },
+        body: JSON.stringify({ text: text.slice(0, 4000) }),
+        signal: AbortSignal.timeout(65000)
+      });
+      if (requestId !== speechRequestId) return;
+      if (response.ok && (response.headers.get("content-type") || "").includes("audio/")) {
+        const audioBlob = await response.blob();
+        if (requestId !== speechRequestId) return;
+        const audioUrl = URL.createObjectURL(audioBlob);
+        atlasAudio = new Audio(audioUrl);
+        atlasAudio.onplay = () => coreWrap?.classList.add("is-speaking");
+        atlasAudio.onended = () => {
+          coreWrap?.classList.remove("is-speaking");
+          URL.revokeObjectURL(audioUrl);
+          if (atlasAudio?.src === audioUrl) atlasAudio = null;
+        };
+        atlasAudio.onerror = () => {
+          coreWrap?.classList.remove("is-speaking");
+          URL.revokeObjectURL(audioUrl);
+          atlasAudio = null;
+        };
+        await atlasAudio.play();
+        return;
+      }
+    } catch {
+      // If ElevenLabs isn't configured or is temporarily unavailable, try browser speech.
+    }
+    if (requestId !== speechRequestId) return;
     if (!("speechSynthesis" in window)) {
-      showMessage("A fala não é compatível com este navegador.");
+      showMessage("A voz online não está disponível e este navegador não oferece fala.");
       return;
     }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(message);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "pt-BR";
     utterance.rate = 1;
     utterance.onstart = () => coreWrap?.classList.add("is-speaking");
