@@ -367,9 +367,38 @@
   const chatInput = document.querySelector("#chat-input");
   const chatAttachButton = document.querySelector("#chat-attach");
   const chatImageInput = document.querySelector("#chat-image-input");
+  let pendingImage = null;
   chatAttachButton?.addEventListener("click", () => chatImageInput?.click());
-  chatImageInput?.addEventListener("change", () => {
-    if (chatImageInput.files?.length) showMessage("Imagem selecionada. O envio de imagens para a IA ainda precisa ser conectado.");
+  chatImageInput?.addEventListener("change", async () => {
+    const file = chatImageInput.files?.[0];
+    if (!file) { pendingImage = null; return; }
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+      showMessage("Escolha uma imagem JPG, PNG ou WEBP.");
+      chatImageInput.value = "";
+      pendingImage = null;
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage("A imagem deve ter até 5 MB.");
+      chatImageInput.value = "";
+      pendingImage = null;
+      return;
+    }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Não consegui ler essa imagem."));
+        reader.readAsDataURL(file);
+      });
+      const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i);
+      if (!match) throw new Error("Formato de imagem inválido.");
+      pendingImage = { mimeType: match[1], data: match[2], name: file.name };
+      showMessage("Imagem pronta: " + file.name + ". Escreva o que deseja saber e envie.");
+    } catch (error) {
+      pendingImage = null;
+      showMessage(error.message || "Não consegui carregar a imagem.");
+    }
   });
   const chatLog = document.querySelector("#chat-log");
   const clearChatButton = document.querySelector("#clear-chat");
@@ -804,8 +833,12 @@
   };
 
   const sendDemoMessage = async (message) => {
-    const localAnswer = getLocalToolAnswer(message);
-    addChatMessage(message, "user");
+    const imageToSend = pendingImage;
+    pendingImage = null;
+    if (chatImageInput) chatImageInput.value = "";
+    const displayMessage = imageToSend ? (message.trim() || "O que aparece nesta imagem?") + "\\n[Imagem anexada: " + imageToSend.name + "]" : message;
+    const localAnswer = imageToSend ? null : getLocalToolAnswer(message);
+    addChatMessage(displayMessage, "user");
     if (localAnswer !== null) {
       addChatMessage(localAnswer, "atlas");
       say(localAnswer);
@@ -827,7 +860,7 @@
           "Content-Type": "application/json",
           "Accept": "text/event-stream"
         },
-        body: JSON.stringify({ message, stream: true, memories: userMemories, history: chatHistory.slice(0, -1).slice(-12).map((item) => ({ role: item.who === "user" ? "user" : "model", text: item.text })) }),
+        body: JSON.stringify({ message: message.trim() || (imageToSend ? "Descreva e analise a imagem anexada." : ""), image: imageToSend ? { mimeType: imageToSend.mimeType, data: imageToSend.data } : undefined, stream: true, memories: userMemories, history: chatHistory.slice(0, -1).slice(-12).map((item) => ({ role: item.who === "user" ? "user" : "model", text: item.text })) }),
         signal: AbortSignal.timeout(100_000)
       });
 
@@ -931,7 +964,7 @@
     chatForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const message = chatInput.value.trim();
-      if (!message) {
+      if (!message && !pendingImage) {
         chatInput.focus();
         return;
       }
@@ -943,6 +976,8 @@
   if (clearChatButton) {
     clearChatButton.addEventListener("click", () => {
       chatHistory = [];
+      pendingImage = null;
+      if (chatImageInput) chatImageInput.value = "";
       renderChatHistory();
       try {
         window.localStorage.removeItem(historyKey);
