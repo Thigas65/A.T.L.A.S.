@@ -847,8 +847,9 @@
       if (chatInput) { chatInput.disabled = false; chatInput.focus(); }
       return localAnswer;
     }
-    showMessage("Conectando ao Gemini…");
-    if (status) status.textContent = "O ATLAS está começando a responder…";
+    showMessage(imageToSend ? "Analisando a imagem com o Gemini…" : "Conectando ao Gemini…");
+    if (status) status.textContent = imageToSend ? "Analisando imagem" : "O ATLAS está começando a responder…";
+    coreWrap?.classList.add("is-thinking");
     if (chatInput) chatInput.disabled = true;
 
     let streamedAnswer = "";
@@ -953,6 +954,7 @@
       if (status) status.textContent = "Conexão com IA indisponível";
       return "";
     } finally {
+      coreWrap?.classList.remove("is-thinking");
       if (chatInput) {
         chatInput.disabled = false;
         chatInput.focus();
