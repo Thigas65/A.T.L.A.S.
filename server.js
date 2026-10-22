@@ -70,7 +70,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), model: process.env.GEMINI_MODEL || "auto: gemini-3.5-flash-lite (simple) / gemini-3.6-flash (detailed)", build: "atlas-diagnostics-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), elevenLabsConfigured: Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID), model: process.env.GEMINI_MODEL || "auto: gemini-3.5-flash-lite (simple) / gemini-3.6-flash (detailed)", build: "atlas-diagnostics-2" });
     return;
   }
 
@@ -87,6 +87,73 @@ const server = http.createServer(async (req, res) => {
     } catch {
       sendJson(res, 500, { error: "Não foi possível carregar a interface do ATLAS." });
     }
+    return;
+  }
+
+  if (pathname === "/api/tts" && req.method === "POST") {
+    if (!allowedByRateLimit((req.socket.remoteAddress || "unknown") + ":tts")) {
+      sendJson(res, 429, { error: "Muitas solicitações de voz. Aguarde um minuto e tente novamente." }, origin);
+      return;
+    }
+    let ttsRaw = "";
+    let ttsTooLarge = false;
+    req.on("data", (chunk) => {
+      if (Buffer.byteLength(ttsRaw) + chunk.length > 16 * 1024) ttsTooLarge = true;
+      else ttsRaw += chunk.toString("utf8");
+    });
+    req.on("end", async () => {
+      if (ttsTooLarge) {
+        sendJson(res, 413, { error: "Texto de voz muito grande." }, origin);
+        return;
+      }
+      let ttsBody;
+      try { ttsBody = JSON.parse(ttsRaw || "{}"); }
+      catch { sendJson(res, 400, { error: "Pedido de voz inválido." }, origin); return; }
+      if (typeof ttsBody.text !== "string" || !ttsBody.text.trim()) {
+        sendJson(res, 400, { error: "Informe o texto que o ATLAS deve falar." }, origin);
+        return;
+      }
+      const elevenKey = process.env.ELEVENLABS_API_KEY;
+      const voiceId = process.env.ELEVENLABS_VOICE_ID;
+      if (!elevenKey || !voiceId) {
+        sendJson(res, 503, { error: "A voz ElevenLabs ainda não está configurada no servidor." }, origin);
+        return;
+      }
+      try {
+        const voiceResponse = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId), {
+          method: "POST",
+          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+          body: JSON.stringify({
+            text: ttsBody.text.trim().slice(0, 4000),
+            model_id: "eleven_multilingual_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+          }),
+          signal: AbortSignal.timeout(60_000)
+        });
+        if (!voiceResponse.ok) {
+          const statusCode = voiceResponse.status;
+          const errorMessage = statusCode === 401 || statusCode === 403
+            ? "A ElevenLabs recusou a chave ou a permissão de síntese de voz."
+            : statusCode === 404
+              ? "O Voice ID não foi encontrado na ElevenLabs."
+              : statusCode === 429
+                ? "A ElevenLabs atingiu o limite disponível. Tente novamente mais tarde."
+                : "Não foi possível gerar a voz na ElevenLabs.";
+          sendJson(res, statusCode === 429 ? 429 : 502, { error: errorMessage }, origin);
+          return;
+        }
+        const audio = Buffer.from(await voiceResponse.arrayBuffer());
+        res.writeHead(200, {
+          "Content-Type": "audio/mpeg",
+          "Content-Length": audio.length,
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff"
+        });
+        res.end(audio);
+      } catch {
+        sendJson(res, 502, { error: "Falha de conexão com a ElevenLabs. Tente novamente." }, origin);
+      }
+    });
     return;
   }
 
