@@ -318,8 +318,8 @@ const server = http.createServer(async (req, res) => {
           pending += decoder.decode();
           if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
           if (groundedSources.size && !res.destroyed && !res.writableEnded) {
-            const links = Array.from(groundedSources, ([uri, title]) => "- " + title + ": " + uri).join("\n");
-            res.write("data: " + JSON.stringify({ text: "\n\nFontes consultadas:\n" + links }) + "\n\n");
+            const sources = Array.from(groundedSources, ([url, title]) => ({ url, title })).slice(0, 8);
+            res.write("data: " + JSON.stringify({ sources }) + "\n\n");
           }
           if (!res.destroyed && !res.writableEnded) {
             res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
