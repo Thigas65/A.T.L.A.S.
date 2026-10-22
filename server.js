@@ -277,14 +277,21 @@ const server = http.createServer(async (req, res) => {
         res.flushHeaders?.();
         const decoder = new TextDecoder();
         let pending = "";
+        const groundedSources = new Map();
         const emitGeminiEvent = (eventText) => {
           if (!eventText || eventText === "[DONE]") return;
           try {
             const chunk = JSON.parse(eventText);
-            const text = (chunk.candidates?.[0]?.content?.parts || [])
+            const candidate = chunk.candidates?.[0];
+            const text = (candidate?.content?.parts || [])
               .filter((part) => typeof part.text === "string")
               .map((part) => part.text)
               .join("");
+            const grounding = candidate?.groundingMetadata;
+            for (const source of [...(grounding?.groundingAttributions || []), ...(grounding?.groundingChunks || [])]) {
+              const uri = source.web?.uri;
+              if (uri && /^https?:\/\//i.test(uri)) groundedSources.set(uri, source.web.title || uri);
+            }
             if (text && !res.destroyed) res.write("data: " + JSON.stringify({ text }) + "\n\n");
           } catch {}
         };
@@ -300,6 +307,10 @@ const server = http.createServer(async (req, res) => {
           }
           pending += decoder.decode();
           if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
+          if (groundedSources.size && !res.destroyed && !res.writableEnded) {
+            const links = Array.from(groundedSources, ([uri, title]) => "- " + title + ": " + uri).join("\n");
+            res.write("data: " + JSON.stringify({ text: "\n\nFontes consultadas:\n" + links }) + "\n\n");
+          }
           if (!res.destroyed && !res.writableEnded) {
             res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
             res.end();
