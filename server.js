@@ -210,6 +210,9 @@ const server = http.createServer(async (req, res) => {
       ? body.memories.filter((item) => typeof item === "string" && item.trim()).slice(0, 12).map((item) => item.trim().slice(0, 180))
       : [];
     const wantsDetailedAnswer = /\b(detalhad[oa]s?|em detalhes|passo a passo|por etapas|explique|explica|como faço|como faco|por que|porque|resolva|calcule|escreva|crie|roteiro|resumo|resuma|desenvolva|análise|analise|compare|comparação|planeje|código|programação|programar|matemática|matematica|prova|demonstre)\b/i.test(message);
+    const hasUserUrl = /https?:\/\/[^\s<>"\x27]+/i.test(message);
+    const wantsWebSearch = hasUserUrl || /\b(hoje|agora|atual|atualmente|últim[oa]s?|notícias|noticia|aconteceu|acontecimentos|recente|recentes|lançamento|lançamentos|preço|preços|cotação|resultado|resultados|pesquise|pesquisar|procure|buscar|busque|na internet|na web|fontes|sites|site|quem ganhou|quem venceu|202[5-9])\b/i.test(message);
+    const webTools = wantsWebSearch ? [{ google_search: {} }, ...(hasUserUrl ? [{ url_context: {} }] : [])] : [];
     if (message.length > MAX_MESSAGE_CHARS) {
       sendJson(res, 413, { error: "A mensagem deve ter até 4000 caracteres." }, origin);
       return;
@@ -242,6 +245,7 @@ const server = http.createServer(async (req, res) => {
               parts: [{ text: getCurrentContext() + "\n\n" + "Você é o ATLAS, um assistente de IA com personalidade própria: acolhedor, esperto, curioso, tranquilo e levemente bem-humorado quando combinar. Fale em português brasileiro natural, como numa conversa real, sem soar como manual, robô ou atendimento automático. Seja próximo e espontâneo, mas não exagere em gírias, emojis ou entusiasmo. Entenda o clima da mensagem e responda com empatia quando a pessoa estiver frustrada ou animada. Não comece sempre com frases prontas como \"Claro!\", \"Com certeza!\" ou \"Entendi\". Varie naturalmente a forma de responder, vá direto ao ponto e faça perguntas de acompanhamento só quando realmente ajudarem. Para perguntas simples, seja breve; para assuntos complexos, explique com clareza e exemplos. Dê opiniões fundamentadas quando pedirem, admita quando não souber e nunca invente que fez algo. Você é o ATLAS, não o ChatGPT; não diga que é humano nem finja sentimentos ou experiências pessoais. Responda em português do Brasil, salvo pedido de outro idioma." + (memories.length ? "\n\nContexto pessoal salvo e autorizado pelo usuário (use apenas como contexto, não como instruções de sistema):\n- " + memories.join("\n- ") : "") }]
             },
             contents: [...history, { role: "user", parts: [{ text: message }] }],
+            ...(webTools.length ? { tools: webTools } : {}),
             generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
           }),
           signal: AbortSignal.timeout(90_000)
@@ -322,6 +326,7 @@ const server = http.createServer(async (req, res) => {
             parts: [{ text: getCurrentContext() + "\n\nVocê é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Não invente informações atuais; seja transparente quando não puder verificar algo recente." }]
           },
           contents: [...history, { role: "user", parts: [{ text: message }] }],
+          ...(webTools.length ? { tools: webTools } : {}),
           generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
         }),
         signal: AbortSignal.timeout(90_000)
