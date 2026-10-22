@@ -79,8 +79,19 @@
       voiceIssue = error?.message || "Não foi possível conectar à ElevenLabs.";
     }
     if (requestId !== speechRequestId) return;
-    coreWrap?.classList.remove("is-speaking");
-    showMessage("Não consegui ativar a voz escolhida da ElevenLabs: " + voiceIssue + ". Não usei a voz antiga do navegador. Confira as configurações da voz no servidor.");
+    if (!("speechSynthesis" in window)) {
+      coreWrap?.classList.remove("is-speaking");
+      showMessage("A ElevenLabs falhou (" + voiceIssue + ") e este navegador não oferece voz alternativa.");
+      return;
+    }
+    showMessage("A ElevenLabs falhou (" + voiceIssue + "). Usando a voz disponível no navegador temporariamente.");
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "pt-BR";
+    utterance.rate = 1;
+    utterance.onstart = () => coreWrap?.classList.add("is-speaking");
+    utterance.onend = () => coreWrap?.classList.remove("is-speaking");
+    utterance.onerror = () => coreWrap?.classList.remove("is-speaking");
+    window.speechSynthesis.speak(utterance);
   };
 
   const respond = (text) => {
