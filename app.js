@@ -881,6 +881,7 @@
         liveMessage.className = "chat-message atlas";
         liveMessage.textContent = "";
         chatLog?.appendChild(liveMessage);
+        let sourcesBox = null;
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let pending = "";
@@ -900,6 +901,32 @@
                 showMessage("O ATLAS está escrevendo…");
                 if (status) status.textContent = "Gerando resposta";
               }
+            }
+            if (Array.isArray(event.sources) && event.sources.length && chatLog) {
+              if (!sourcesBox) {
+                sourcesBox = document.createElement("section");
+                sourcesBox.className = "chat-sources";
+                const heading = document.createElement("div");
+                heading.className = "chat-sources-title";
+                heading.textContent = "Fontes consultadas";
+                sourcesBox.appendChild(heading);
+                chatLog.appendChild(sourcesBox);
+              }
+              for (const source of event.sources) {
+                if (!source || typeof source.url !== "string" || !/^https?:\/\//i.test(source.url)) continue;
+                const link = document.createElement("a");
+                link.className = "chat-source-card";
+                link.href = source.url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                const title = document.createElement("strong");
+                title.textContent = String(source.title || new URL(source.url).hostname).slice(0, 140);
+                const domain = document.createElement("span");
+                domain.textContent = new URL(source.url).hostname;
+                link.append(title, domain);
+                sourcesBox.appendChild(link);
+              }
+              if (chatLog) chatLog.scrollTop = chatLog.scrollHeight;
             }
             if (event.error) throw new Error(event.error);
             if (event.done) finished = true;
