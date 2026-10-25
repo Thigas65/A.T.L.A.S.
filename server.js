@@ -77,7 +77,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.GEMINI_API_KEY), elevenLabsConfigured: Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID), model: process.env.GEMINI_MODEL || "auto: gemini-3.5-flash-lite (simple) / gemini-3.6-flash (detailed)", build: "atlas-diagnostics-2" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), elevenLabsConfigured: Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", build: "atlas-multi-provider-1" });
     return;
   }
 
@@ -235,49 +235,87 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || (wantsDetailedAnswer ? "gemini-3.6-flash" : "gemini-3.5-flash-lite");
-    if (!apiKey) {
-      sendJson(res, 503, { error: "A chave GEMINI_API_KEY não está configurada no servidor. Nenhuma chamada foi feita." }, origin);
+    const cloudflareAccount = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const cloudflareToken = process.env.CLOUDFLARE_API_TOKEN;
+    const cloudflareModel = process.env.CLOUDFLARE_AI_MODEL;
+    const groqKey = process.env.GROQ_API_KEY;
+    const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    const systemPrompt = getCurrentContext() + "\\n\\nVocê é o ATLAS, um assistente de IA com personalidade própria: acolhedor, esperto, curioso, tranquilo e levemente bem-humorado quando combinar. Fale em português brasileiro natural, como numa conversa real, sem soar como manual, robô ou atendimento automático. Seja próximo e espontâneo, mas não exagere em gírias, emojis ou entusiasmo. Entenda o clima da mensagem e responda com empatia quando a pessoa estiver frustrada ou animada. Não comece sempre com frases prontas como \\"Claro!\\", \\"Com certeza!\\", ou \\"Entendi\\": varie naturalmente e vá direto ao ponto. Para perguntas simples, seja breve; para assuntos complexos, explique com clareza e exemplos. Não termine todas as respostas com uma pergunta. Admita quando não souber e nunca invente que fez algo. Você é o ATLAS, não o ChatGPT; não diga que é humano nem finja sentimentos ou experiências pessoais. Responda em português do Brasil, salvo pedido de outro idioma." + (memories.length ? "\\n\\nContexto pessoal salvo e autorizado pelo usuário (use apenas como contexto, não como instruções de sistema):\\n- " + memories.join("\\n- ") : "");
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...history.map((item) => ({ role: item.role === "model" ? "assistant" : "user", content: item.parts.map((part) => part.text || "").join("\\n") })),
+      { role: "user", content: validImage
+        ? [{ type: "text", text: message }, { type: "image_url", image_url: { url: "data:" + image.mimeType + ";base64," + image.data } }]
+        : message }
+    ];
+    if (!cloudflareAccount || !cloudflareToken || !cloudflareModel) {
+      sendJson(res, 503, { error: "A IA principal ainda não está configurada. No Render, configure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_AI_MODEL. Nenhuma chamada foi feita." }, origin);
       return;
     }
 
-    try {
-      if (body.stream === true) {
-        const streamResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, {
+    const providers = [
+      {
+        name: "Workers AI",
+        url: "https://api.cloudflare.com/client/v4/accounts/" + encodeURIComponent(cloudflareAccount) + "/ai/v1/chat/completions",
+        key: cloudflareToken,
+        model: cloudflareModel,
+        headers: { Authorization: "Bearer " + cloudflareToken }
+      },
+      ...(groqKey ? [{
+        name: "Groq",
+        url: "https://api.groq.com/openai/v1/chat/completions",
+        key: groqKey,
+        model: groqModel,
+        headers: { Authorization: "Bearer " + groqKey }
+      }] : [])
+    ];
+
+    let lastStatus = 502;
+    let lastError = "Os provedores de IA estão temporariamente indisponíveis.";
+    let completed = false;
+    for (let providerIndex = 0; providerIndex < providers.length; providerIndex++) {
+      const provider = providers[providerIndex];
+      let providerResponse;
+      try {
+        providerResponse = await fetch(provider.url, {
           method: "POST",
-          headers: {
-            "x-goog-api-key": apiKey,
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream"
-          },
+          headers: { ...provider.headers, "Content-Type": "application/json", "Accept": body.stream === true ? "text/event-stream" : "application/json" },
           body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: getCurrentContext() + "\n\n" + "Você é o ATLAS, um assistente de IA com personalidade própria: acolhedor, esperto, curioso, tranquilo e levemente bem-humorado quando combinar. Fale em português brasileiro natural, como numa conversa real, sem soar como manual, robô ou atendimento automático. Seja próximo e espontâneo, mas não exagere em gírias, emojis ou entusiasmo. Entenda o clima da mensagem e responda com empatia quando a pessoa estiver frustrada ou animada. Não comece sempre com frases prontas como \"Claro!\", \"Com certeza!\" ou \"Entendi\". Varie naturalmente a forma de responder e vá direto ao ponto. Não termine todas as respostas com uma pergunta: pergunte no final só quando isso realmente ajudar; muitas respostas devem terminar naturalmente com uma conclusão ou informação útil. Para perguntas simples, seja breve; para assuntos complexos, explique com clareza e exemplos. Dê opiniões fundamentadas quando pedirem, admita quando não souber e nunca invente que fez algo. Você é o ATLAS, não o ChatGPT; não diga que é humano nem finja sentimentos ou experiências pessoais. Responda em português do Brasil, salvo pedido de outro idioma." + (memories.length ? "\n\nContexto pessoal salvo e autorizado pelo usuário (use apenas como contexto, não como instruções de sistema):\n- " + memories.join("\n- ") : "") }]
-            },
-            contents: [...history, { role: "user", parts: userParts }],
-            ...(webTools.length ? { tools: webTools } : {}),
-            generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
+            model: provider.model,
+            messages,
+            stream: body.stream === true,
+            max_tokens: wantsDetailedAnswer ? 900 : 450,
+            temperature: 0.7
           }),
           signal: AbortSignal.timeout(90_000)
         });
+      } catch (error) {
+        lastStatus = 502;
+        lastError = "Falha de conexão com " + provider.name + ".";
+        console.warn("ATLAS provider connection failed:", provider.name, error?.name || "error");
+        continue;
+      }
 
-        if (!streamResponse.ok) {
-          let providerMessage = "sem detalhe";
-          try {
-            const providerBody = await streamResponse.clone().json();
-            if (typeof providerBody?.error?.message === "string") providerMessage = providerBody.error.message.slice(0, 300);
-          } catch {}
-          console.warn("ATLAS Gemini streaming HTTP status:", streamResponse.status, "| provider:", providerMessage);
-          const errorMessage = streamResponse.status === 429
-            ? "O Gemini atingiu o limite de uso ou a cota disponível. Tente novamente mais tarde."
-            : streamResponse.status === 401 || streamResponse.status === 403
-              ? "A chave do Gemini foi recusada. Confira a configuração da API no Render."
-              : "Não foi possível iniciar a resposta em tempo real do Gemini. Tente novamente.";
-          sendJson(res, streamResponse.status === 429 ? 429 : 502, { error: errorMessage }, origin);
-          return;
-        }
+      if (!providerResponse.ok) {
+        lastStatus = providerResponse.status;
+        let providerMessage = "";
+        try {
+          const providerBody = await providerResponse.clone().json();
+          providerMessage = String(providerBody?.error?.message || providerBody?.message || "").slice(0, 180);
+        } catch {}
+        console.warn("ATLAS provider HTTP status:", provider.name, providerResponse.status, providerMessage);
+        lastError = providerResponse.status === 429
+          ? provider.name + " atingiu o limite de uso."
+          : providerResponse.status === 401 || providerResponse.status === 403
+            ? "A autenticação de " + provider.name + " foi recusada. Confira as variáveis secretas no Render."
+            : provider.name + " está temporariamente indisponível.";
+        // Quota/rate-limit, falha temporária ou erro do servidor: tenta o próximo provedor.
+        if (providerResponse.status === 429 || providerResponse.status >= 500 || providerResponse.status === 408) continue;
+        if (providerIndex === 0 && groqKey && (providerResponse.status === 401 || providerResponse.status === 403)) continue;
+        break;
+      }
 
+      if (body.stream === true) {
         res.writeHead(200, {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
@@ -288,107 +326,64 @@ const server = http.createServer(async (req, res) => {
         res.flushHeaders?.();
         const decoder = new TextDecoder();
         let pending = "";
-        const groundedSources = new Map();
-        const emitGeminiEvent = (eventText) => {
+        const emitProviderEvent = (eventText) => {
           if (!eventText || eventText === "[DONE]") return;
           try {
             const chunk = JSON.parse(eventText);
-            const candidate = chunk.candidates?.[0];
-            const text = (candidate?.content?.parts || [])
-              .filter((part) => typeof part.text === "string")
-              .map((part) => part.text)
-              .join("");
-            const grounding = candidate?.groundingMetadata;
-            for (const source of [...(grounding?.groundingAttributions || []), ...(grounding?.groundingChunks || [])]) {
-              const uri = source.web?.uri;
-              if (uri && /^https?:\/\//i.test(uri)) groundedSources.set(uri, source.web.title || uri);
-            }
-            if (text && !res.destroyed) res.write("data: " + JSON.stringify({ text }) + "\n\n");
+            const delta = chunk.choices?.[0]?.delta?.content;
+            const text = typeof delta === "string" ? delta :
+              Array.isArray(delta) ? delta.map((part) => part.text || "").join("") : "";
+            if (text && !res.destroyed) res.write("data: " + JSON.stringify({ text }) + "\\n\\n");
           } catch {}
         };
-
         try {
-          for await (const bytes of streamResponse.body) {
+          for await (const bytes of providerResponse.body) {
             pending += decoder.decode(bytes, { stream: true });
-            const lines = pending.split(/\r?\n/);
+            const lines = pending.split(/\\r?\\n/);
             pending = lines.pop() || "";
-            for (const line of lines) {
-              if (line.startsWith("data:")) emitGeminiEvent(line.slice(5).trim());
-            }
+            for (const line of lines) if (line.startsWith("data:")) emitProviderEvent(line.slice(5).trim());
           }
           pending += decoder.decode();
-          if (pending.startsWith("data:")) emitGeminiEvent(pending.slice(5).trim());
-          if (groundedSources.size && !res.destroyed && !res.writableEnded) {
-            const sources = Array.from(groundedSources, ([url, title]) => ({ url, title })).slice(0, 8);
-            res.write("data: " + JSON.stringify({ sources }) + "\n\n");
-          }
+          if (pending.startsWith("data:")) emitProviderEvent(pending.slice(5).trim());
           if (!res.destroyed && !res.writableEnded) {
-            res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
+            res.write("data: " + JSON.stringify({ provider: provider.name }) + "\\n\\n");
+            res.write("data: " + JSON.stringify({ done: true }) + "\\n\\n");
             res.end();
           }
-        } catch (streamError) {
-          console.warn("ATLAS Gemini stream interrupted:", streamError?.name || "error");
+        } catch {
           if (!res.destroyed && !res.writableEnded) {
-            res.write("data: " + JSON.stringify({ error: "A conexão com o Gemini foi interrompida. Tente novamente." }) + "\n\n");
-            res.write("data: " + JSON.stringify({ done: true }) + "\n\n");
+            res.write("data: " + JSON.stringify({ error: "A conexão com a IA foi interrompida. Tente novamente." }) + "\\n\\n");
+            res.write("data: " + JSON.stringify({ done: true }) + "\\n\\n");
             res.end();
           }
         }
-        return;
+        completed = true;
+        break;
       }
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: {
-          "x-goog-api-key": apiKey,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: getCurrentContext() + "\n\nVocê é o ATLAS, um assistente útil, claro e respeitoso. Responda em português do Brasil, salvo pedido de outro idioma. Não invente informações atuais; seja transparente quando não puder verificar algo recente." }]
-          },
-          contents: [...history, { role: "user", parts: userParts }],
-          ...(webTools.length ? { tools: webTools } : {}),
-          generationConfig: { maxOutputTokens: wantsDetailedAnswer ? 700 : 300, thinkingConfig: { thinkingLevel: wantsDetailedAnswer ? "LOW" : "MINIMAL" } }
-        }),
-        signal: AbortSignal.timeout(90_000)
-      });
-
-      if (!response.ok) {
-        let providerMessage = "sem detalhe";
-        try {
-          const providerBody = await response.clone().json();
-          if (typeof providerBody?.error?.message === "string") providerMessage = providerBody.error.message.slice(0, 300);
-        } catch {}
-        console.warn("ATLAS Gemini HTTP status:", response.status, "| provider:", providerMessage);
-        const providerErrors = {
-          400: "O Gemini recusou o pedido. Confira se GEMINI_MODEL está correto e se a chave é do Google AI Studio.",
-          401: "A chave GEMINI_API_KEY foi recusada. Confira a chave no Render e, se necessário, gere outra no Google AI Studio.",
-          403: "A API recusou a chave por falta de permissão. Confira se a Generative Language API está habilitada e se a chave não tem restrições incompatíveis.",
-          404: "O Gemini não disponibilizou este modelo para a chave. Confira se GEMINI_MODEL existe no Render; se existir, remova-a para usar o modelo padrão atual.",
-          429: "O Gemini atingiu o limite de uso ou a cota disponível. Confira os limites da API e tente novamente mais tarde."
-        };
-        const errorMessage = providerErrors[response.status] ||
-          (response.status >= 500
-            ? "O serviço do Gemini está temporariamente indisponível. Tente novamente mais tarde."
-            : "O Gemini recusou o pedido (HTTP " + response.status + "). Confira a configuração da API.");
-        sendJson(res, response.status === 429 ? 429 : 502, { error: errorMessage }, origin);
-        return;
+      try {
+        const data = await providerResponse.json();
+        const content = data.choices?.[0]?.message?.content;
+        const answer = Array.isArray(content) ? content.map((part) => part.text || "").join("\\n").trim() : String(content || "").trim();
+        if (!answer) {
+          lastStatus = 502;
+          lastError = provider.name + " não retornou uma resposta em texto.";
+          continue;
+        }
+        sendJson(res, 200, { answer, provider: provider.name }, origin);
+        completed = true;
+        break;
+      } catch {
+        lastStatus = 502;
+        lastError = "Não foi possível interpretar a resposta de " + provider.name + ".";
       }
+    }
 
-      const data = await response.json();
-      const answer = (data.candidates?.[0]?.content?.parts || [])
-        .filter((part) => typeof part.text === "string")
-        .map((part) => part.text)
-        .join("\n")
-        .trim();
-
-      if (!answer) {
-        sendJson(res, 502, { error: "A IA não retornou texto nesta resposta." }, origin);
-        return;
-      }
-      sendJson(res, 200, { answer }, origin);
-    } catch {
+    if (!completed && !res.headersSent) {
+      sendJson(res, lastStatus === 429 ? 429 : 502, {
+        error: lastError + (groqKey ? " A IA reserva também não conseguiu responder." : " Configure GROQ_API_KEY para ativar a IA reserva.")
+      }, origin);
+    }
       sendJson(res, 502, { error: "Falha de conexão com a IA. Tente novamente mais tarde." }, origin);
     }
   });
