@@ -149,7 +149,7 @@
         if (title) title.textContent = "Ajuda";
         if (panelHeading) panelHeading.textContent = "Como testar o ATLAS";
         if (panelDescription) panelDescription.textContent = "Digite uma mensagem na área Conversas. O microfone tenta reconhecer sua fala, se o navegador suportar e você autorizar o acesso.";
-        if (footnote) footnote.textContent = "O chat está preparado para usar o Gemini quando o servidor e a chave estiverem configurados.";
+        if (footnote) footnote.textContent = "O ATLAS pode alternar automaticamente entre a IA principal e a reserva quando ambas estiverem configuradas.";
         showMessage("Ajuda do ATLAS.");
       } else {
         if (title) title.textContent = "";
@@ -847,7 +847,7 @@
       if (chatInput) { chatInput.disabled = false; chatInput.focus(); }
       return localAnswer;
     }
-    showMessage(imageToSend ? "Analisando a imagem com o Gemini…" : "Conectando ao Gemini…");
+    showMessage(imageToSend ? "Analisando a imagem com a IA do ATLAS…" : "Conectando à IA do ATLAS…");
     if (status) status.textContent = imageToSend ? "Analisando imagem" : "O ATLAS está começando a responder…";
     coreWrap?.classList.add("is-thinking");
     if (chatInput) chatInput.disabled = true;
@@ -867,7 +867,7 @@
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Não foi possível obter uma resposta do Gemini.");
+        throw new Error(data.error || "Não foi possível obter uma resposta do ATLAS.");
       }
       if (!response.body || !response.headers.get("content-type")?.includes("text/event-stream")) {
         const data = await response.json().catch(() => ({}));
@@ -960,15 +960,15 @@
         if (!finished) throw new Error("A transmissão foi encerrada antes de terminar.");
       }
 
-      if (!streamedAnswer.trim()) throw new Error("O Gemini não retornou texto nesta resposta.");
+      if (!streamedAnswer.trim()) throw new Error("A IA do ATLAS não retornou texto nesta resposta.");
       addChatMessage(streamedAnswer.trim(), "atlas");
       say(streamedAnswer.trim());
-      showMessage("Resposta recebida do Gemini.");
-      if (status) status.textContent = "Gemini conectado";
+      showMessage("Resposta recebida pela IA do ATLAS.");
+      if (status) status.textContent = "IA do ATLAS conectada";
       return streamedAnswer.trim();
     } catch (error) {
       const messageText = error && error.name === "TimeoutError"
-        ? "O Gemini demorou demais para responder. Tente novamente."
+        ? "A IA do ATLAS demorou demais para responder. Tente novamente."
         : (error && error.message || "").includes("Failed to fetch")
           ? "Não consegui acessar a IA. Se o site estiver publicado, confira o servidor e a variável GEMINI_API_KEY."
           : (error && error.message || "Não consegui conectar ao Gemini.");
