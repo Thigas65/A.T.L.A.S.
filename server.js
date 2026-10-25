@@ -384,8 +384,6 @@ const server = http.createServer(async (req, res) => {
         error: lastError + (groqKey ? " A IA reserva também não conseguiu responder." : " Configure GROQ_API_KEY para ativar a IA reserva.")
       }, origin);
     }
-      sendJson(res, 502, { error: "Falha de conexão com a IA. Tente novamente mais tarde." }, origin);
-    }
   });
 });
 
