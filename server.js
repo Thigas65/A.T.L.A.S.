@@ -169,6 +169,61 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === "/api/generate-image" && req.method === "POST") {
+    if (!allowedByRateLimit((req.socket.remoteAddress || "unknown") + ":image")) {
+      sendJson(res, 429, { error: "Muitas solicitações de imagem. Aguarde um minuto e tente novamente." }, origin);
+      return;
+    }
+    if (!process.env.HF_TOKEN) {
+      sendJson(res, 503, { error: "A geração de imagens não está configurada. Adicione HF_TOKEN no Environment do Render." }, origin);
+      return;
+    }
+    let imageRaw = "";
+    let imageTooLarge = false;
+    req.on("data", (chunk) => {
+      if (Buffer.byteLength(imageRaw) + chunk.length > 16 * 1024) imageTooLarge = true;
+      else imageRaw += chunk.toString("utf8");
+    });
+    req.on("end", async () => {
+      if (imageTooLarge) {
+        sendJson(res, 413, { error: "O pedido de imagem é muito grande." }, origin);
+        return;
+      }
+      let imageBody;
+      try { imageBody = JSON.parse(imageRaw || "{}"); }
+      catch { sendJson(res, 400, { error: "Pedido de imagem inválido." }, origin); return; }
+      if (typeof imageBody.prompt !== "string" || !imageBody.prompt.trim()) {
+        sendJson(res, 400, { error: "Descreva a imagem que deseja criar." }, origin);
+        return;
+      }
+      if (imageBody.prompt.trim().length > 1200) {
+        sendJson(res, 413, { error: "A descrição da imagem deve ter até 1200 caracteres." }, origin);
+        return;
+      }
+      try {
+        const { InferenceClient } = await import("@huggingface/inference");
+        const client = new InferenceClient(process.env.HF_TOKEN);
+        const imageBlob = await client.textToImage({
+          model: process.env.HF_IMAGE_MODEL || "black-forest-labs/FLUX.1-schnell",
+          inputs: imageBody.prompt.trim(),
+          provider: "auto",
+          parameters: { num_inference_steps: 4 }
+        });
+        const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
+        if (!imageBuffer.length) throw new Error("O modelo retornou uma imagem vazia.");
+        sendJson(res, 200, {
+          image: "data:" + (imageBlob.type || "image/png") + ";base64," + imageBuffer.toString("base64"),
+          model: process.env.HF_IMAGE_MODEL || "black-forest-labs/FLUX.1-schnell"
+        }, origin);
+      } catch (error) {
+        const detail = String(error?.message || "").slice(0, 220);
+        console.warn("ATLAS image generation failed:", error?.name || "error", detail);
+        sendJson(res, 502, { error: "Não consegui gerar a imagem. Verifique se o token HF_TOKEN tem permissão de Inferência e se o modelo/provedor está disponível na sua conta." }, origin);
+      }
+    });
+    return;
+  }
+
   if (pathname !== "/api/chat" || req.method !== "POST") {
     sendJson(res, 404, { error: "Rota não encontrada." });
     return;
