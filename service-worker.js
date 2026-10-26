@@ -1,7 +1,7 @@
 "use strict";
 
 // Increment this version whenever the cached app shell changes.
-const CACHE = "atlas-shell-v17";
+const CACHE = "atlas-shell-v18";
 const CORE = ["/", "/index.html", "/app.js", "/manifest.webmanifest", "/icons/atlas-192.svg", "/icons/atlas-512.svg"];
 
 self.addEventListener("install", (event) => {
