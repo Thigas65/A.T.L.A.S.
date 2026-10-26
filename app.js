@@ -149,63 +149,32 @@
     if (!streamSpeechRunning) void drainStreamSpeech();
   };
   const playSpeechChunk = async (text, session) => {
-    if (session !== streamSpeechSession) return;
-    let response;
-    try {
-      response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "audio/mpeg, application/json" },
-        body: JSON.stringify({ text: text.slice(0, 1200) }),
-        signal: AbortSignal.timeout(65000)
-      });
-      if (session !== streamSpeechSession) return;
-      if (response.ok && (response.headers.get("content-type") || "").includes("audio/")) {
-        const audioBlob = await response.blob();
-        if (session !== streamSpeechSession) return;
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        atlasAudio = audio;
-        await new Promise((resolve) => {
-          let settled = false;
-          const finish = () => {
-            if (settled) return;
-            settled = true;
-            URL.revokeObjectURL(audioUrl);
-            if (atlasAudio === audio) atlasAudio = null;
-            if (streamSpeechResolve === finish) streamSpeechResolve = null;
-            coreWrap?.classList.remove("is-speaking");
-            resolve();
-          };
-          streamSpeechResolve = finish;
-          audio.onplay = () => coreWrap?.classList.add("is-speaking");
-          audio.onended = finish;
-          audio.onerror = finish;
-          audio.play().catch(finish);
-        });
-        return;
-      }
-    } catch (_) {}
-    if (session !== streamSpeechSession) return;
-    if ("speechSynthesis" in window) {
-      await new Promise((resolve) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "pt-BR";
-        utterance.rate = 1;
-        let settled = false;
-        const finish = () => {
-          if (settled) return;
-          settled = true;
-          if (streamSpeechResolve === finish) streamSpeechResolve = null;
-          coreWrap?.classList.remove("is-speaking");
-          resolve();
-        };
-        streamSpeechResolve = finish;
-        utterance.onstart = () => coreWrap?.classList.add("is-speaking");
-        utterance.onend = finish;
-        utterance.onerror = finish;
-        window.speechSynthesis.speak(utterance);
-      });
-    }
+    if (session !== streamSpeechSession || !("speechSynthesis" in window)) return;
+    // A voz do navegador começa sem esperar uma chamada de rede à Cartesia.
+    await new Promise((resolve) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      utterance.rate = 1.05;
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (streamSpeechResolve === finish) streamSpeechResolve = null;
+        coreWrap?.classList.remove("is-speaking");
+        resolve();
+      };
+      streamSpeechResolve = finish;
+      utterance.onstart = () => {
+        if (session === streamSpeechSession) {
+          coreWrap?.classList.add("is-speaking");
+          showVoiceStatus("Voz: reprodução rápida durante a resposta");
+        }
+      };
+      utterance.onend = finish;
+      utterance.onerror = finish;
+      if (session === streamSpeechSession) window.speechSynthesis.speak(utterance);
+      else finish();
+    });
   };
   const drainStreamSpeech = async () => {
     if (streamSpeechRunning) return;
