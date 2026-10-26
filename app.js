@@ -403,10 +403,13 @@
     }
     const granted = await requestMicrophonePermission();
     if (!granted) return;
-    conversationActive = true;
-    wakeWordActive = false;
-    renewConversationTimer();
-    startRecognition("conversation");
+    // Ao tocar no microfone, ativamos primeiro a escuta da palavra-chave “ATLAS”.
+    // Depois que ela for reconhecida, a sessão passa para conversa contínua.
+    wakeWordActive = true;
+    conversationActive = false;
+    awaitingCommand = false;
+    if (permissionNote) permissionNote.textContent = "Escuta ativada: diga “ATLAS” para começar. Depois pode continuar falando sem repetir o nome. A sessão encerra após 2 minutos sem fala.";
+    startRecognition("wake");
   });
 
   document.addEventListener("visibilitychange", () => {
