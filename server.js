@@ -254,26 +254,26 @@ const server = http.createServer(async (req, res) => {
         : message }
     ];
     const cloudflareConfigured = Boolean(cloudflareAccount && cloudflareToken && cloudflareModel);
-    if (!groqKey && !cloudflareConfigured) {
-      sendJson(res, 503, { error: "A IA não está configurada. No Render, adicione GROQ_API_KEY (recomendado) ou configure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_AI_MODEL." }, origin);
+    if (!cloudflareConfigured && !groqKey) {
+      sendJson(res, 503, { error: "A IA não está configurada. No Render, configure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_AI_MODEL; GROQ_API_KEY é opcional como reserva." }, origin);
       return;
     }
 
-    // Groq é o provedor principal; Workers AI é usado como alternativa se configurado.
+    // Cloudflare Workers AI é o provedor principal; Groq é a alternativa.
     const providers = [
+      ...(cloudflareConfigured ? [{
+        name: "Cloudflare Workers AI",
+        url: "https://api.cloudflare.com/client/v4/accounts/" + encodeURIComponent(cloudflareAccount) + "/ai/v1/chat/completions",
+        key: cloudflareToken,
+        model: cloudflareModel,
+        headers: { Authorization: "Bearer " + cloudflareToken }
+      }] : []),
       ...(groqKey ? [{
         name: "Groq",
         url: "https://api.groq.com/openai/v1/chat/completions",
         key: groqKey,
         model: groqModel,
         headers: { Authorization: "Bearer " + groqKey }
-      }] : []),
-      ...(cloudflareConfigured ? [{
-        name: "Workers AI",
-        url: "https://api.cloudflare.com/client/v4/accounts/" + encodeURIComponent(cloudflareAccount) + "/ai/v1/chat/completions",
-        key: cloudflareToken,
-        model: cloudflareModel,
-        headers: { Authorization: "Bearer " + cloudflareToken }
       }] : [])
     ];
 
