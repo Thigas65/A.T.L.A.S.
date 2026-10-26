@@ -548,7 +548,34 @@
       .chat-panel { position:fixed; left:17vw; right:17vw; bottom:7vh; width:auto; }
     }
 
-  </style>
+  
+    /* Fundo holográfico ATLAS: linhas mais claras, nítidas e visíveis. */
+    body::before {
+      background-image:
+        linear-gradient(rgba(0, 169, 255, .42) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 169, 255, .42) 1px, transparent 1px) !important;
+      background-size: 44px 52px !important;
+      opacity: .96 !important;
+      mask-image: linear-gradient(to bottom, #000 0%, #000 78%, rgba(0,0,0,.45) 100%) !important;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 78%, rgba(0,0,0,.45) 100%) !important;
+    }
+    body::after {
+      background-image:
+        linear-gradient(rgba(0, 176, 255, .78) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 176, 255, .78) 1px, transparent 1px) !important;
+      background-size: 44px 42px !important;
+      box-shadow: 0 -4px 36px rgba(0, 165, 255, .34) !important;
+    }
+    @media (max-width: 900px) {
+      body::before {
+        background-image:
+          linear-gradient(rgba(0, 169, 255, .44) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 169, 255, .44) 1px, transparent 1px) !important;
+        background-size: 37px 52px !important;
+      }
+    }
+
+</style>
 </head>
 <body>
   <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu ATLAS" aria-expanded="false" aria-controls="atlas-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
