@@ -120,6 +120,108 @@
     window.speechSynthesis.speak(utterance);
   };
 
+
+  // Fala em partes durante a geração do texto, mantendo a ordem e evitando sobreposição.
+  let streamSpeechQueue = [];
+  let streamSpeechRunning = false;
+  let streamSpeechSession = 0;
+  let streamSpeechResolve = null;
+  const stopStreamSpeech = () => {
+    streamSpeechSession++;
+    streamSpeechQueue = [];
+    if (atlasAudio) {
+      atlasAudio.pause();
+      atlasAudio = null;
+    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (streamSpeechResolve) {
+      streamSpeechResolve();
+      streamSpeechResolve = null;
+    }
+    streamSpeechRunning = false;
+    coreWrap?.classList.remove("is-speaking");
+  };
+  const enqueueStreamSpeech = (text) => {
+    const voiceSetting = document.querySelector("#voice-enabled");
+    const chunk = String(text || "").trim();
+    if (!chunk || (voiceSetting && !voiceSetting.checked)) return;
+    streamSpeechQueue.push(chunk);
+    if (!streamSpeechRunning) void drainStreamSpeech();
+  };
+  const playSpeechChunk = async (text, session) => {
+    if (session !== streamSpeechSession) return;
+    let response;
+    try {
+      response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "audio/mpeg, application/json" },
+        body: JSON.stringify({ text: text.slice(0, 1200) }),
+        signal: AbortSignal.timeout(65000)
+      });
+      if (session !== streamSpeechSession) return;
+      if (response.ok && (response.headers.get("content-type") || "").includes("audio/")) {
+        const audioBlob = await response.blob();
+        if (session !== streamSpeechSession) return;
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        atlasAudio = audio;
+        await new Promise((resolve) => {
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            URL.revokeObjectURL(audioUrl);
+            if (atlasAudio === audio) atlasAudio = null;
+            if (streamSpeechResolve === finish) streamSpeechResolve = null;
+            coreWrap?.classList.remove("is-speaking");
+            resolve();
+          };
+          streamSpeechResolve = finish;
+          audio.onplay = () => coreWrap?.classList.add("is-speaking");
+          audio.onended = finish;
+          audio.onerror = finish;
+          audio.play().catch(finish);
+        });
+        return;
+      }
+    } catch (_) {}
+    if (session !== streamSpeechSession) return;
+    if ("speechSynthesis" in window) {
+      await new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "pt-BR";
+        utterance.rate = 1;
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          if (streamSpeechResolve === finish) streamSpeechResolve = null;
+          coreWrap?.classList.remove("is-speaking");
+          resolve();
+        };
+        streamSpeechResolve = finish;
+        utterance.onstart = () => coreWrap?.classList.add("is-speaking");
+        utterance.onend = finish;
+        utterance.onerror = finish;
+        window.speechSynthesis.speak(utterance);
+      });
+    }
+  };
+  const drainStreamSpeech = async () => {
+    if (streamSpeechRunning) return;
+    streamSpeechRunning = true;
+    const session = streamSpeechSession;
+    while (streamSpeechQueue.length && session === streamSpeechSession) {
+      const chunk = streamSpeechQueue.shift();
+      await playSpeechChunk(chunk, session);
+    }
+    if (session === streamSpeechSession) {
+      streamSpeechRunning = false;
+      assistantSpeaking = false;
+      resumeConversationListening();
+    }
+  };
+
   const respond = (text) => {
     const query = text.toLocaleLowerCase("pt-BR");
     let answer;
@@ -1023,6 +1125,10 @@
     if (chatInput) chatInput.disabled = true;
 
     let streamedAnswer = "";
+    let speechBuffer = "";
+    let streamSpeechStarted = false;
+    stopStreamSpeech();
+    assistantSpeaking = true;
     let liveMessage = null;
     try {
       const response = await fetch(API_URL, {
@@ -1065,6 +1171,15 @@
               const isFirstChunk = streamedAnswer.length === 0;
               const shouldFollow = chatLog && (chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 80);
               streamedAnswer += event.text;
+              speechBuffer += event.text;
+              // Só envia frases completas para a voz; a primeira começa antes de terminar a resposta.
+              const speechParts = speechBuffer.match(/^([\\s\\S]*?[.!?](?:["'”’)]*)?(?:\\s+|$))/);
+              if (speechParts && speechParts[1].trim()) {
+                const spokenPart = speechParts[1].trim();
+                speechBuffer = speechBuffer.slice(speechParts[1].length);
+                enqueueStreamSpeech(spokenPart);
+                streamSpeechStarted = true;
+              }
               if (liveMessage) liveMessage.textContent += event.text;
               if (chatLog && shouldFollow) chatLog.scrollTop = chatLog.scrollHeight;
               if (isFirstChunk) {
@@ -1131,12 +1246,15 @@
       }
 
       if (!streamedAnswer.trim()) throw new Error("A IA do ATLAS não retornou texto nesta resposta.");
+      if (speechBuffer.trim()) enqueueStreamSpeech(speechBuffer.trim());
+      if (!streamSpeechStarted && streamedAnswer.trim()) enqueueStreamSpeech(streamedAnswer.trim());
       addChatMessage(streamedAnswer.trim(), "atlas");
-      say(streamedAnswer.trim());
       showMessage("Resposta recebida pela IA do ATLAS.");
       if (status) status.textContent = "IA do ATLAS conectada";
       return streamedAnswer.trim();
     } catch (error) {
+      stopStreamSpeech();
+      assistantSpeaking = false;
       const messageText = error && error.name === "TimeoutError"
         ? "A IA do ATLAS demorou demais para responder. Tente novamente."
         : (error && error.message || "").includes("Failed to fetch")
