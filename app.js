@@ -43,9 +43,11 @@
 
   let atlasAudio = null;
   let speechRequestId = 0;
+  let assistantSpeaking = false;
   const say = async (message) => {
     const voiceSetting = document.querySelector("#voice-enabled");
-    if (voiceSetting && !voiceSetting.checked) return;
+    if (voiceSetting && !voiceSetting.checked) { assistantSpeaking = false; resumeConversationListening(); return; }
+    assistantSpeaking = true;
     const text = String(message || "").trim();
     if (!text) return;
     const requestId = ++speechRequestId;
@@ -78,11 +80,15 @@
           coreWrap?.classList.remove("is-speaking");
           URL.revokeObjectURL(audioUrl);
           if (atlasAudio === audio) atlasAudio = null;
+          assistantSpeaking = false;
+          resumeConversationListening();
         };
         audio.onerror = () => {
           coreWrap?.classList.remove("is-speaking");
           URL.revokeObjectURL(audioUrl);
           if (atlasAudio === audio) atlasAudio = null;
+          assistantSpeaking = false;
+          resumeConversationListening();
         };
         await audio.play();
         const elapsed = ((Date.now() - voiceStartedAt) / 1000).toFixed(1).replace(".", ",");
@@ -109,8 +115,8 @@
     utterance.lang = "pt-BR";
     utterance.rate = 1;
     utterance.onstart = () => coreWrap?.classList.add("is-speaking");
-    utterance.onend = () => { coreWrap?.classList.remove("is-speaking"); resumeConversationListening(); };
-    utterance.onerror = () => { coreWrap?.classList.remove("is-speaking"); resumeConversationListening(); };
+    utterance.onend = () => { assistantSpeaking = false; coreWrap?.classList.remove("is-speaking"); resumeConversationListening(); };
+    utterance.onerror = () => { assistantSpeaking = false; coreWrap?.classList.remove("is-speaking"); resumeConversationListening(); };
     window.speechSynthesis.speak(utterance);
   };
 
@@ -217,9 +223,9 @@
     conversationTimer = window.setTimeout(endConversationForIdle, CONVERSATION_IDLE_MS);
   };
   const resumeConversationListening = () => {
-    if (!conversationActive || document.visibilityState !== "visible" || activeRecognition) return;
+    if (!conversationActive || assistantSpeaking || document.visibilityState !== "visible" || activeRecognition) return;
     window.setTimeout(() => {
-      if (conversationActive && !activeRecognition && document.visibilityState === "visible") startRecognition("conversation");
+      if (conversationActive && !assistantSpeaking && !activeRecognition && document.visibilityState === "visible") startRecognition("conversation");
     }, 500);
   };
   const processVoiceCommand = async (transcript) => {
