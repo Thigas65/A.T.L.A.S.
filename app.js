@@ -57,7 +57,7 @@
     coreWrap?.classList.remove("is-speaking");
     let voiceIssue = "";
     const voiceStartedAt = Date.now();
-    showVoiceStatus("Voz: tentando conectar à ElevenLabs…");
+    showVoiceStatus("Voz: tentando conectar à Cartesia…");
 
     try {
       const response = await fetch("/api/tts", {
@@ -86,25 +86,25 @@
         };
         await audio.play();
         const elapsed = ((Date.now() - voiceStartedAt) / 1000).toFixed(1).replace(".", ",");
-        showVoiceStatus("Voz: ElevenLabs ativa · áudio gerado em " + elapsed + " s.");
-        showMessage("O ATLAS está usando a voz personalizada da ElevenLabs.");
+        showVoiceStatus("Voz: Cartesia ativa · áudio gerado em " + elapsed + " s.");
+        showMessage("O ATLAS está usando a voz personalizada da Cartesia.");
         return;
       }
       const data = await response.json().catch(() => ({}));
-      voiceIssue = data.error || ("A ElevenLabs respondeu com erro (" + response.status + ").");
+      voiceIssue = data.error || ("A Cartesia respondeu com erro (" + response.status + ").");
     } catch (error) {
-      voiceIssue = error?.message || "Não foi possível conectar à ElevenLabs.";
+      voiceIssue = error?.message || "Não foi possível conectar à Cartesia.";
     }
     if (requestId !== speechRequestId) return;
     const elapsed = ((Date.now() - voiceStartedAt) / 1000).toFixed(1).replace(".", ",");
     if (!("speechSynthesis" in window)) {
       coreWrap?.classList.remove("is-speaking");
-      showVoiceStatus("Voz: erro na ElevenLabs após " + elapsed + " s — " + voiceIssue);
-      showMessage("A ElevenLabs falhou (" + voiceIssue + ") e este navegador não oferece voz alternativa.");
+      showVoiceStatus("Voz: erro na Cartesia após " + elapsed + " s — " + voiceIssue);
+      showMessage("A Cartesia falhou (" + voiceIssue + ") e este navegador não oferece voz alternativa.");
       return;
     }
-    showVoiceStatus("Voz: navegador (alternativa) · ElevenLabs falhou após " + elapsed + " s — " + voiceIssue);
-    showMessage("A ElevenLabs falhou (" + voiceIssue + "). Usando a voz disponível no navegador temporariamente.");
+    showVoiceStatus("Voz: navegador (alternativa) · Cartesia falhou após " + elapsed + " s — " + voiceIssue);
+    showMessage("A Cartesia falhou (" + voiceIssue + "). Usando a voz disponível no navegador temporariamente.");
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "pt-BR";
     utterance.rate = 1;
@@ -150,7 +150,7 @@
         app.classList.add("settings-mode");
         if (title) title.textContent = "Configurações";
         if (panelHeading) panelHeading.textContent = "Configurações";
-        if (panelDescription) panelDescription.textContent = "Escolha se o ATLAS deve falar as respostas. A voz personalizada tenta usar a ElevenLabs; se falhar, o navegador será usado como alternativa.";
+        if (panelDescription) panelDescription.textContent = "Escolha se o ATLAS deve falar as respostas. A voz personalizada tenta usar a Cartesia; se falhar, o navegador será usado como alternativa.";
         if (footnote) footnote.textContent = "O ATLAS envia o texto da resposta ao serviço de voz para gerar o áudio. Confira o estado da voz abaixo; a preferência de fala fica salva neste navegador.";
         showMessage("Configurações da demonstração.");
       } else if (label === "Ajuda") {
@@ -578,7 +578,7 @@
         app.classList.add("settings-mode");
         document.querySelector("#view-title").textContent = "Voz";
         document.querySelector("#panel-heading").textContent = "Configurações de voz";
-        document.querySelector("#panel-description").textContent = "Ative ou desative as respostas faladas. O ATLAS tenta usar a voz personalizada da ElevenLabs e pode recorrer à voz do navegador.";
+        document.querySelector("#panel-description").textContent = "Ative ou desative as respostas faladas. O ATLAS tenta usar a voz personalizada da Cartesia e pode recorrer à voz do navegador.";
         document.querySelector("#panel-footnote").textContent = "O reconhecimento de fala depende do navegador e da permissão do microfone. O estado do serviço de voz aparece abaixo.";
         document.querySelector("#voice-setting-row").style.display = "flex";
       } else if (action === "settings") {
@@ -586,7 +586,7 @@
         document.querySelector("#view-title").textContent = "Configurações";
         document.querySelector("#panel-heading").textContent = "Configurações";
         document.querySelector("#panel-description").textContent = "Configure as respostas faladas do ATLAS e confira qual serviço de voz está ativo.";
-        document.querySelector("#panel-footnote").textContent = "A voz personalizada tenta usar a ElevenLabs. Se não funcionar, o ATLAS pode recorrer à voz do navegador.";
+        document.querySelector("#panel-footnote").textContent = "A voz personalizada tenta usar a Cartesia. Se não funcionar, o ATLAS pode recorrer à voz do navegador.";
         document.querySelector("#voice-setting-row").style.display = "flex";
       } else if (action === "help") {
         app.classList.add("help-mode");
