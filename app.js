@@ -979,8 +979,8 @@
       const messageText = error && error.name === "TimeoutError"
         ? "A IA do ATLAS demorou demais para responder. Tente novamente."
         : (error && error.message || "").includes("Failed to fetch")
-          ? "Não consegui acessar a IA. Se o site estiver publicado, confira o servidor e a variável GEMINI_API_KEY."
-          : (error && error.message || "Não consegui conectar ao Gemini.");
+          ? "Não consegui acessar a IA. Se o site estiver publicado, confira o servidor e a variável GROQ_API_KEY."
+          : (error && error.message || "Não consegui conectar à IA do ATLAS.");
       if (liveMessage) liveMessage.remove();
       const savedErrorText = streamedAnswer.trim()
         ? streamedAnswer.trim() + "\n\n⚠️ A conexão foi interrompida antes da resposta terminar. Tente novamente."
