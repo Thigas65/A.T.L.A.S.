@@ -450,7 +450,41 @@
       .app.settings-mode .view-title, .app.help-mode .view-title, .app.feature-mode .view-title { display:block !important; }
       .app.settings-mode .settings-panel, .app.help-mode .settings-panel, .app.feature-mode .feature-placeholder { display:block; }
     }
-  </style>
+  
+    /* Ajustes finais da interface ATLAS: núcleo visível, responsivo e alinhado. */
+    .core-wrap { transform: none; }
+    main { justify-content: center; }
+    .app:not(.chat-mode):not(.settings-mode):not(.help-mode):not(.feature-mode) main {
+      align-items: center; justify-content: center;
+    }
+    .core-wrap { flex: 0 0 auto; }
+    .tv-mode .core-wrap { transform: none; }
+    @media (min-width: 601px) {
+      .app { min-height: 100dvh; }
+      .app:not(.chat-mode):not(.settings-mode):not(.help-mode):not(.feature-mode) main {
+        padding-top: 34px; padding-bottom: 34px;
+      }
+      .core-wrap { width: clamp(260px, 35vw, 430px); margin: 0 auto 18px; }
+      .core { width: 100%; height: 100%; }
+      .right-panel { align-self: center; }
+    }
+    @media (max-width: 600px) {
+      .core-wrap {
+        top: 9px; left: 50%; width: 40px; height: 40px;
+        transform: translateX(-50%); margin: 0;
+      }
+      .core-wrap .core { width: 34px; height: 34px; }
+      .core-wrap .core::before { width: 13px; height: 13px; }
+      .app:not(.chat-mode):not(.settings-mode):not(.help-mode):not(.feature-mode) main > h1 {
+        display: block !important; position: fixed; top: 17px; left: calc(50% + 29px);
+        transform: none; font-size: 14px; letter-spacing: .16em; padding: 0;
+      }
+      .app:not(.chat-mode):not(.settings-mode):not(.help-mode):not(.feature-mode) .core-wrap {
+        top: 8px; left: calc(50% - 32px); width: 34px; height: 34px;
+      }
+    }
+
+</style>
 </head>
 <body>
   <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu ATLAS" aria-expanded="false" aria-controls="atlas-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
