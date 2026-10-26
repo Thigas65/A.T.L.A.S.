@@ -1174,14 +1174,8 @@
               const shouldFollow = chatLog && (chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 80);
               streamedAnswer += event.text;
               speechBuffer += event.text;
-              // Só envia frases completas para a voz; a primeira começa antes de terminar a resposta.
-              const speechParts = speechBuffer.match(/^([\s\S]*?[.!?](?:["'”’)]*)?(?:\s+|$))/);
-              if (speechParts && speechParts[1].trim()) {
-                const spokenPart = speechParts[1].trim();
-                speechBuffer = speechBuffer.slice(speechParts[1].length);
-                enqueueStreamSpeech(spokenPart);
-                streamSpeechStarted = true;
-              }
+              // A resposta será narrada em uma única faixa, sem pausas entre frases.
+              streamSpeechStarted = true;
               if (liveMessage) liveMessage.textContent += event.text;
               if (chatLog && shouldFollow) chatLog.scrollTop = chatLog.scrollHeight;
               if (isFirstChunk) {
@@ -1248,8 +1242,8 @@
       }
 
       if (!streamedAnswer.trim()) throw new Error("A IA do ATLAS não retornou texto nesta resposta.");
-      if (speechBuffer.trim()) enqueueStreamSpeech(speechBuffer.trim());
-      if (!streamSpeechStarted && streamedAnswer.trim()) enqueueStreamSpeech(streamedAnswer.trim());
+      const completeSpeech = String(streamedAnswer || speechBuffer || "").trim();
+      if (completeSpeech) enqueueStreamSpeech(completeSpeech);
       addChatMessage(streamedAnswer.trim(), "atlas");
       showMessage("Resposta recebida pela IA do ATLAS.");
       if (status) status.textContent = "IA do ATLAS conectada";
