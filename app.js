@@ -447,14 +447,41 @@
   const chatAttachButton = document.querySelector("#chat-attach");
   const chatImageInput = document.querySelector("#chat-image-input");
   let pendingImage = null;
+  const imagePreview = document.querySelector("#chat-image-preview");
+  const clearPendingImage = () => {
+    pendingImage = null;
+    if (chatImageInput) chatImageInput.value = "";
+    if (imagePreview) {
+      imagePreview.replaceChildren();
+      imagePreview.hidden = true;
+    }
+    chatForm?.classList.remove("has-image-preview");
+  };
+  const showImagePreview = (dataUrl, fileName) => {
+    if (!imagePreview || !chatForm) return;
+    imagePreview.replaceChildren();
+    const thumbnail = document.createElement("img");
+    thumbnail.src = dataUrl;
+    thumbnail.alt = "Prévia da imagem selecionada";
+    thumbnail.title = fileName;
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "chat-image-remove";
+    removeButton.setAttribute("aria-label", "Remover imagem");
+    removeButton.title = "Remover imagem";
+    removeButton.textContent = "×";
+    removeButton.addEventListener("click", clearPendingImage);
+    imagePreview.append(thumbnail, removeButton);
+    imagePreview.hidden = false;
+    chatForm.classList.add("has-image-preview");
+  };
   chatAttachButton?.addEventListener("click", () => chatImageInput?.click());
   chatImageInput?.addEventListener("change", async () => {
     const file = chatImageInput.files?.[0];
     if (!file) { pendingImage = null; return; }
     if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
       showMessage("Escolha uma imagem JPG, PNG ou WEBP.");
-      chatImageInput.value = "";
-      pendingImage = null;
+      clearPendingImage();
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -473,9 +500,10 @@
       const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i);
       if (!match) throw new Error("Formato de imagem inválido.");
       pendingImage = { mimeType: match[1], data: match[2], name: file.name };
+      showImagePreview("data:" + match[1] + ";base64," + match[2], file.name);
       showMessage("Imagem pronta: " + file.name + ". Escreva o que deseja saber e envie.");
     } catch (error) {
-      pendingImage = null;
+      clearPendingImage();
       showMessage(error.message || "Não consegui carregar a imagem.");
     }
   });
