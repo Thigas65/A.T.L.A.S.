@@ -802,6 +802,38 @@
       .chat-form .chat-attach, .chat-form .chat-mic, .chat-form button[type="submit"] { width:36px !important; height:36px !important; min-width:36px !important; flex-basis:36px !important; }
     }
 
+  
+    /* ATLAS chat panel: open only when the user taps the chat launcher. */
+    @media (max-width: 900px) {
+      .chat-panel {
+        display:none !important;
+        top:auto !important; left:12px !important; right:12px !important; bottom:14px !important;
+        height:min(68dvh,560px) !important; max-height:calc(100dvh - 118px) !important;
+        border:1px solid rgba(0,190,255,.55) !important; border-radius:22px !important;
+        padding:12px !important; background:rgba(2,10,29,.97) !important;
+        box-shadow:0 0 28px rgba(0,145,255,.24) !important;
+      }
+      .chat-panel.atlas-chat-open { display:flex !important; }
+      .chat-panel.atlas-chat-open .chat-log { display:flex !important; }
+      .chat-panel.atlas-chat-open .chat-form { display:flex !important; }
+      .chat-panel.atlas-chat-open .chat-heading { display:flex !important; }
+      .chat-panel.atlas-chat-open .chat-heading .clear-chat { display:block !important; }
+      .chat-panel.atlas-chat-open .chat-note { display:none !important; }
+      .chat-launcher {
+        display:flex !important; position:fixed !important; z-index:80 !important;
+        right:17px !important; bottom:20px !important; width:54px !important; height:54px !important;
+        align-items:center !important; justify-content:center !important; border-radius:50% !important;
+        color:#03172c !important; border:1px solid #66f4ff !important;
+        background:radial-gradient(circle at 35% 25%,#9cffff,#00cfff 58%,#0875ff) !important;
+        box-shadow:0 0 22px rgba(0,193,255,.55) !important; cursor:pointer !important;
+      }
+      .chat-launcher svg { width:25px !important; height:25px !important; fill:none !important; stroke:currentColor !important; stroke-width:1.8 !important; stroke-linecap:round !important; stroke-linejoin:round !important; }
+      body.atlas-chat-visible .chat-launcher { display:none !important; }
+    }
+    @media (min-width: 901px) {
+      .chat-launcher { display:none !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -822,6 +854,7 @@
     <button class="menu-item" type="button" data-menu-action="help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-1.2 1-1.7 1.4-1.7 3M12 17h.01"/></svg>Ajuda e sobre</button>
     <div class="menu-footer">ATLAS · versão 0.4<br>Chat com Gemini, histórico e memória local em desenvolvimento.</div>
   </aside>
+  <button class="chat-launcher" id="chat-launcher" type="button" aria-label="Abrir conversa com ATLAS" title="Abrir conversa com ATLAS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5Z"/><path d="M8 10h8M8 14h5"/></svg></button>
   <div class="app">
     <nav class="rail left" aria-label="Navegação principal">
       <div class="reference-brand"><span class="reference-brand-core" aria-hidden="true"></span><span>ATLAS</span></div>
