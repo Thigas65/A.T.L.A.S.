@@ -868,6 +868,36 @@
     .chat-launcher svg { width:25px !important; height:25px !important; fill:none !important; stroke:currentColor !important; stroke-width:1.8 !important; stroke-linecap:round !important; stroke-linejoin:round !important; }
     body.atlas-chat-visible .chat-launcher { display:flex !important; }
 
+  
+    /* Barra de fala sempre visível na tela inicial do celular. */
+    .chat-panel {
+      display:flex !important; position:fixed !important; z-index:90 !important;
+      left:12px !important; right:12px !important;
+      bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+      width:auto !important; max-width:none !important; margin:0 !important;
+      padding:0 !important; gap:0 !important; border:0 !important;
+      background:transparent !important; box-shadow:none !important;
+      pointer-events:none !important;
+    }
+    .chat-panel .chat-form {
+      display:flex !important; width:100% !important; min-height:54px !important;
+      padding:7px !important; border:1px solid rgba(0,210,255,.65) !important;
+      border-radius:18px !important; background:rgba(2,13,31,.97) !important;
+      box-shadow:0 0 22px rgba(0,170,255,.2) !important; pointer-events:auto !important;
+    }
+    .chat-panel .chat-form textarea { min-height:36px !important; max-height:90px !important; }
+    .chat-panel .chat-heading, .chat-panel .chat-log, .chat-panel .chat-note { display:none !important; }
+    .chat-panel.atlas-chat-open {
+      top:auto !important; height:min(68dvh,560px) !important;
+      max-height:calc(100dvh - 120px) !important; padding:12px !important;
+      border:1px solid rgba(0,190,255,.55) !important; border-radius:22px !important;
+      background:rgba(2,10,29,.97) !important; box-shadow:0 0 28px rgba(0,145,255,.24) !important;
+      pointer-events:auto !important;
+    }
+    .chat-panel.atlas-chat-open .chat-heading, .chat-panel.atlas-chat-open .chat-log { display:flex !important; }
+    .chat-panel.atlas-chat-open .chat-note { display:none !important; }
+    .chat-launcher { display:none !important; }
+
   </style>
 </head>
 <body>
