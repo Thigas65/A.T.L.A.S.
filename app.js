@@ -28,8 +28,17 @@
     if (hint) hint.textContent = message;
   };
   const voiceStatus = document.querySelector("#voice-status");
+  let settingsVoiceStatus = document.querySelector("#settings-voice-status");
+  if (!settingsVoiceStatus) {
+    settingsVoiceStatus = document.createElement("p");
+    settingsVoiceStatus.id = "settings-voice-status";
+    settingsVoiceStatus.setAttribute("aria-live", "polite");
+    settingsVoiceStatus.style.cssText = "margin:12px 0;padding:12px;border:1px solid rgba(80,190,255,.35);border-radius:10px;color:var(--text-color, #dceeff);font-size:14px;line-height:1.5";
+    document.querySelector("#voice-setting-row")?.insertAdjacentElement("afterend", settingsVoiceStatus);
+  }
   const showVoiceStatus = (message) => {
     if (voiceStatus) voiceStatus.textContent = message;
+    if (settingsVoiceStatus) settingsVoiceStatus.textContent = message;
   };
 
   let atlasAudio = null;
@@ -141,8 +150,8 @@
         app.classList.add("settings-mode");
         if (title) title.textContent = "Configurações";
         if (panelHeading) panelHeading.textContent = "Configurações";
-        if (panelDescription) panelDescription.textContent = "Escolha se o ATLAS deve falar as respostas usando a voz do navegador.";
-        if (footnote) footnote.textContent = "Essa preferência vale neste navegador. O protótipo não envia áudio ou mensagens a um servidor de IA.";
+        if (panelDescription) panelDescription.textContent = "Escolha se o ATLAS deve falar as respostas. A voz personalizada tenta usar a ElevenLabs; se falhar, o navegador será usado como alternativa.";
+        if (footnote) footnote.textContent = "O ATLAS envia o texto da resposta ao serviço de voz para gerar o áudio. Confira o estado da voz abaixo; a preferência de fala fica salva neste navegador.";
         showMessage("Configurações da demonstração.");
       } else if (label === "Ajuda") {
         app.classList.add("help-mode");
@@ -569,15 +578,15 @@
         app.classList.add("settings-mode");
         document.querySelector("#view-title").textContent = "Voz";
         document.querySelector("#panel-heading").textContent = "Configurações de voz";
-        document.querySelector("#panel-description").textContent = "Ative ou desative as respostas faladas. Para falar com o ATLAS, use o botão de microfone e permita o acesso quando solicitado.";
-        document.querySelector("#panel-footnote").textContent = "O reconhecimento depende do navegador. As respostas ainda são demonstrativas.";
+        document.querySelector("#panel-description").textContent = "Ative ou desative as respostas faladas. O ATLAS tenta usar a voz personalizada da ElevenLabs e pode recorrer à voz do navegador.";
+        document.querySelector("#panel-footnote").textContent = "O reconhecimento de fala depende do navegador e da permissão do microfone. O estado do serviço de voz aparece abaixo.";
         document.querySelector("#voice-setting-row").style.display = "flex";
       } else if (action === "settings") {
         app.classList.add("settings-mode");
         document.querySelector("#view-title").textContent = "Configurações";
         document.querySelector("#panel-heading").textContent = "Configurações";
-        document.querySelector("#panel-description").textContent = "Personalize as opções disponíveis nesta versão de demonstração.";
-        document.querySelector("#panel-footnote").textContent = "As opções são locais neste protótipo. Ainda não existe conexão com uma IA.";
+        document.querySelector("#panel-description").textContent = "Configure as respostas faladas do ATLAS e confira qual serviço de voz está ativo.";
+        document.querySelector("#panel-footnote").textContent = "A voz personalizada tenta usar a ElevenLabs. Se não funcionar, o ATLAS pode recorrer à voz do navegador.";
         document.querySelector("#voice-setting-row").style.display = "flex";
       } else if (action === "help") {
         app.classList.add("help-mode");
