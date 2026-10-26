@@ -842,8 +842,17 @@
   };
 
   const extractImagePrompt = (text) => {
-    const match = String(text || "").trim().match(/^(?:gerar imagem(?: de)?|crie uma imagem(?: de)?|criar imagem(?: de)?|desenhe uma imagem(?: de)?)\s*:?\s*(.+)$/i);
-    return match ? match[1].trim() : null;
+    let cleaned = String(text || "").trim();
+    // Accept natural requests such as "Oi Atlas, vc consegue fazer uma imagem de galinha pra mim?"
+    cleaned = cleaned.replace(/^(?:oi|olá|ola|ei)\s*(?:atlas)?[\s,!:.-]*/i, "").trim();
+    const asksForImage = /\b(?:imagem|foto|ilustração|ilustracao|desenho)\b/i.test(cleaned);
+    const asksToCreate = /\b(?:fazer|faz|faça|faca|criar|crie|gerar|gera|gere|desenhar|desenha|desenhe|consegue|pode|poderia)\b/i.test(cleaned);
+    if (asksForImage && asksToCreate) {
+      const subject = cleaned.match(/\b(?:imagem|foto|ilustração|ilustracao|desenho)\s+(?:de|do|da|dos|das)\s+(.+?)(?:\s+(?:pra|para)\s+mim|\s+por favor)?[?.!]*$/i);
+      if (subject && subject[1].trim()) return subject[1].trim();
+    }
+    const direct = cleaned.match(/^(?:gerar imagem(?: de)?|crie uma imagem(?: de)?|criar imagem(?: de)?|desenhe uma imagem(?: de)?)\s*:?\s*(.+)$/i);
+    return direct ? direct[1].trim() : null;
   };
 
   const generateAtlasImage = async (prompt) => {
