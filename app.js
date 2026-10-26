@@ -193,7 +193,7 @@
     }
   };
 
-  const normalizeVoiceText = (value) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
+  const normalizeVoiceText = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
   let conversationActive = false;
   let conversationTimer = null;
   let recognitionMode = "off"; // off | wake | conversation
@@ -293,7 +293,7 @@
         if (!transcript) continue;
         if (mode === "wake") {
           const normalized = normalizeVoiceText(transcript);
-          const wakeMatch = normalized.match(/(?:^|\\s)atlas\\b[\\s,.:;!?-]*(.*)$/i);
+          const wakeMatch = normalized.match(/(?:^|\s)atlas\b[\s,.:;!?-]*(.*)$/i);
           if (!wakeMatch) continue;
           const command = wakeMatch[1].trim();
           wakeWordActive = false;
