@@ -841,6 +841,59 @@
     } catch (_) { return "Não consegui resolver essa conta. Confira a expressão e tente novamente."; }
   };
 
+  const extractImagePrompt = (text) => {
+    const match = String(text || "").trim().match(/^(?:gerar imagem(?: de)?|crie uma imagem(?: de)?|criar imagem(?: de)?|desenhe uma imagem(?: de)?)\s*:?\s*(.+)$/i);
+    return match ? match[1].trim() : null;
+  };
+
+  const generateAtlasImage = async (prompt) => {
+    showMessage("O ATLAS está criando sua imagem com FLUX.1 Schnell…");
+    if (status) status.textContent = "Gerando imagem";
+    coreWrap?.classList.add("is-thinking");
+    if (chatInput) chatInput.disabled = true;
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ prompt }),
+        signal: AbortSignal.timeout(120000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Não foi possível gerar a imagem.");
+      if (typeof data.image !== "string" || !data.image.startsWith("data:image/")) {
+        throw new Error("O modelo não retornou uma imagem válida.");
+      }
+      addChatMessage("Imagem gerada pelo " + (data.model || "FLUX.1 Schnell") + ".", "atlas");
+      if (chatLog) {
+        const image = document.createElement("img");
+        image.src = data.image;
+        image.alt = "Imagem gerada pelo ATLAS: " + prompt;
+        image.loading = "lazy";
+        image.style.cssText = "display:block;width:100%;max-width:640px;height:auto;max-height:70vh;object-fit:contain;margin:12px auto;border-radius:14px;border:1px solid rgba(0,190,255,.35)";
+        chatLog.appendChild(image);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+      showMessage("Imagem gerada. O modelo pode consumir créditos do Hugging Face.");
+      if (status) status.textContent = "Imagem gerada";
+      say("Imagem gerada.");
+      return data.image;
+    } catch (error) {
+      const messageText = error?.name === "TimeoutError"
+        ? "A geração da imagem demorou demais. Tente novamente."
+        : error?.message || "Não consegui gerar a imagem.";
+      addChatMessage(messageText, "atlas");
+      showMessage(messageText);
+      if (status) status.textContent = "Falha ao gerar imagem";
+      return "";
+    } finally {
+      coreWrap?.classList.remove("is-thinking");
+      if (chatInput) {
+        chatInput.disabled = false;
+        chatInput.focus();
+      }
+    }
+  };
+
   const sendDemoMessage = async (message) => {
     const imageToSend = pendingImage;
     pendingImage = null;
@@ -856,7 +909,9 @@
       if (chatInput) { chatInput.disabled = false; chatInput.focus(); }
       return localAnswer;
     }
-    showMessage(imageToSend ? "Analisando a imagem com a IA do ATLAS…" : "Conectando à IA do ATLAS…");
+    const imagePrompt = imageToSend ? null : extractImagePrompt(message);
+    if (imagePrompt) return generateAtlasImage(imagePrompt);
+        showMessage(imageToSend ? "Analisando a imagem com a IA do ATLAS…" : "Conectando à IA do ATLAS…");
     if (status) status.textContent = imageToSend ? "Analisando imagem" : "O ATLAS está começando a responder…";
     coreWrap?.classList.add("is-thinking");
     if (chatInput) chatInput.disabled = true;
