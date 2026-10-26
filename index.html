@@ -648,7 +648,7 @@
     }
 
 
-    /* Ajustes ATLAS: núcleo centralizado, grade holográfica e navegação móvel. */
+    /* Ajustes ATLAS: restaura a conversa e corrige o layout móvel. */
     .core-wrap { transform: none !important; }
     @media (min-width: 601px) { main { justify-content: center; } .core-wrap { margin: 0 auto 18px; } }
     @media (max-width: 600px) {
@@ -666,7 +666,7 @@
       .core-wrap .orbit { display:block !important; }
       .core-wrap .core-mark { display:grid !important; }
       .core-wrap .core { width:auto !important; height:auto !important; }
-      .chat-panel { position:relative !important; left:auto !important; bottom:auto !important; width:100% !important; flex:1 1 auto; min-height:0; margin:0; }
+      .chat-panel { display:flex !important; flex-direction:column; position:relative !important; left:auto !important; bottom:auto !important; width:100% !important; flex:1 1 auto; min-height:0; margin:0; }
       .chat-heading { display:none !important; } .chat-log { display:none; }
       .chat-form { min-height:56px; height:auto; max-height:130px; padding:5px 7px; gap:5px; border:1px solid rgba(0,207,255,.6); border-radius:28px; background:rgba(0,13,39,.94); }
       .chat-form textarea { font-size:14px; border-left:0; padding-left:8px; }
