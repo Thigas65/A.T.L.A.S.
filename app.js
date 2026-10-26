@@ -149,8 +149,41 @@
     if (!streamSpeechRunning) void drainStreamSpeech();
   };
   const playSpeechChunk = async (text, session) => {
+    if (session !== streamSpeechSession) return;
+    // Tenta a voz personalizada em cada frase; a voz do navegador é apenas alternativa.
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "audio/mpeg, application/json" },
+        body: JSON.stringify({ text: String(text).slice(0, 1200) }),
+        signal: AbortSignal.timeout(18000)
+      });
+      if (session !== streamSpeechSession) return;
+      if (response.ok && (response.headers.get("content-type") || "").includes("audio/")) {
+        const blob = await response.blob();
+        if (session !== streamSpeechSession) return;
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        atlasAudio = audio;
+        audio.onplay = () => {
+          coreWrap?.classList.add("is-speaking");
+          showVoiceStatus("Voz: personalizada ATLAS");
+        };
+        await new Promise((resolve) => {
+          const finish = () => {
+            URL.revokeObjectURL(url);
+            if (atlasAudio === audio) atlasAudio = null;
+            coreWrap?.classList.remove("is-speaking");
+            resolve();
+          };
+          audio.onended = finish;
+          audio.onerror = finish;
+          audio.play().catch(finish);
+        });
+        return;
+      }
+    } catch (_) {}
     if (session !== streamSpeechSession || !("speechSynthesis" in window)) return;
-    // A voz do navegador começa sem esperar uma chamada de rede à Cartesia.
     await new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
@@ -167,7 +200,7 @@
       utterance.onstart = () => {
         if (session === streamSpeechSession) {
           coreWrap?.classList.add("is-speaking");
-          showVoiceStatus("Voz: reprodução rápida durante a resposta");
+          showVoiceStatus("Voz: navegador (alternativa)");
         }
       };
       utterance.onend = finish;
