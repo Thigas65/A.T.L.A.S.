@@ -834,6 +834,21 @@
       .chat-launcher { display:none !important; }
     }
 
+  
+    /* Keep the chat hidden after replies; only the launcher can open it. */
+    .chat-panel { display:none !important; }
+    .chat-panel.atlas-chat-open { display:flex !important; }
+    .chat-launcher {
+      display:flex !important; position:fixed !important; z-index:100 !important;
+      right:17px !important; bottom:20px !important; width:54px !important; height:54px !important;
+      align-items:center !important; justify-content:center !important; border-radius:50% !important;
+      color:#03172c !important; border:1px solid #66f4ff !important;
+      background:radial-gradient(circle at 35% 25%,#9cffff,#00cfff 58%,#0875ff) !important;
+      box-shadow:0 0 22px rgba(0,193,255,.55) !important; cursor:pointer !important;
+    }
+    .chat-launcher svg { width:25px !important; height:25px !important; fill:none !important; stroke:currentColor !important; stroke-width:1.8 !important; stroke-linecap:round !important; stroke-linejoin:round !important; }
+    body.atlas-chat-visible .chat-launcher { display:flex !important; }
+
   </style>
 </head>
 <body>
@@ -945,7 +960,7 @@
       <button class="feature-card" type="button" data-menu-action="lab"><span class="feature-icon folder-icon">▱</span><span class="feature-copy"><strong>Projetos e Tarefas</strong><small>Organize suas ideias,<br>metas e próximos passos.</small></span><span class="feature-arrow">›</span></button>
     </aside>
   </div>
-  <script src="./app.js?v=20261026-chat-toggle-4" defer></script>
+  <script src="./app.js?v=20261026-chat-toggle-5" defer></script>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));</script>
 </body>
 </html>
