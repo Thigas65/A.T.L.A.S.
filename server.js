@@ -140,12 +140,14 @@ const server = http.createServer(async (req, res) => {
         if (!voiceResponse.ok) {
           const statusCode = voiceResponse.status;
           const errorMessage = statusCode === 401 || statusCode === 403
-            ? "A ElevenLabs recusou a chave ou a permissão de síntese de voz."
+            ? "A ElevenLabs recusou a chave ou a permissão de síntese de voz (HTTP " + statusCode + ")."
             : statusCode === 404
-              ? "O Voice ID não foi encontrado na ElevenLabs."
+              ? "O Voice ID não foi encontrado na ElevenLabs (HTTP 404)."
               : statusCode === 429
-                ? "A ElevenLabs atingiu o limite disponível. Tente novamente mais tarde."
-                : "Não foi possível gerar a voz na ElevenLabs.";
+                ? "A ElevenLabs atingiu o limite disponível (HTTP 429). Tente novamente mais tarde."
+                : statusCode === 400
+                  ? "A ElevenLabs recusou o pedido (HTTP 400). Confira o Voice ID, o modelo e as permissões da conta."
+                  : "A ElevenLabs recusou a geração da voz (HTTP " + statusCode + ").";
           sendJson(res, statusCode === 429 ? 429 : 502, { error: errorMessage }, origin);
           return;
         }
