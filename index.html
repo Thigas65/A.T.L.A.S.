@@ -600,6 +600,53 @@
       opacity:.95;
     }
 
+
+    /* Composição visual principal ATLAS: núcleo central e grade sutil. */
+    @media (max-width: 900px) {
+      .app > main > .core-wrap {
+        position:fixed !important; display:grid !important;
+        top:36% !important; left:50% !important; right:auto !important;
+        width:150px !important; height:150px !important; min-height:150px !important;
+        margin:0 !important; transform:translate(-50%,-50%) !important;
+        z-index:0 !important; pointer-events:none;
+        background:radial-gradient(circle,rgba(0,207,255,.13),rgba(0,105,255,.08) 48%,transparent 72%);
+        filter:drop-shadow(0 0 24px rgba(0,190,255,.30));
+      }
+      .app > main > .core-wrap .core {
+        width:118px !important; height:118px !important;
+        border:2px solid #00e5ff !important; border-radius:50% !important;
+        background:radial-gradient(circle at 50% 42%,#d5ffff 0%,#65efff 10%,#1bc3ff 31%,#0875ff 55%,#062451 82%) !important;
+        box-shadow:0 0 12px rgba(0,224,255,.95),0 0 32px rgba(0,154,255,.66),0 0 70px rgba(0,118,255,.24),inset 0 0 14px rgba(190,255,255,.72) !important;
+      }
+      .app > main > .core-wrap .core::before {
+        width:28px !important; height:28px !important; border:0 !important;
+        background:radial-gradient(circle,#fff 0%,#a9ffff 22%,#38eaff 56%,rgba(0,195,255,0) 100%) !important;
+        box-shadow:0 0 14px #a4ffff,0 0 28px rgba(0,238,255,.95) !important;
+      }
+      .app > main > h1 {
+        top:28px !important; left:50% !important; right:auto !important;
+        transform:translateX(-50%) !important; font-size:17px !important;
+        letter-spacing:.24em !important; z-index:41;
+      }
+      .chat-panel { position:relative; z-index:2; }
+      .chat-log { background:transparent; }
+      body::before {
+        background-image:
+          linear-gradient(rgba(0,135,230,.15) 1px,transparent 1px),
+          linear-gradient(90deg,rgba(0,135,230,.15) 1px,transparent 1px) !important;
+        background-size:42px 52px !important; opacity:1 !important;
+        mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.8) 72%,rgba(0,0,0,.3) 100%) !important;
+        -webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.8) 72%,rgba(0,0,0,.3) 100%) !important;
+      }
+      body::after {
+        background-image:
+          linear-gradient(rgba(0,151,255,.34) 1px,transparent 1px),
+          linear-gradient(90deg,rgba(0,151,255,.30) 1px,transparent 1px) !important;
+        background-size:100% 25px,31px 100% !important;
+        box-shadow:0 -3px 24px rgba(0,145,255,.18) !important;
+      }
+    }
+
 </style>
 </head>
 <body>
