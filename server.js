@@ -77,7 +77,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), elevenLabsConfigured: Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", build: "atlas-multi-provider-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), cartesiaConfigured: Boolean(process.env.CARTESIA_API_KEY && process.env.CARTESIA_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", build: "atlas-multi-provider-1" });
     return;
   }
 
@@ -120,47 +120,50 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 400, { error: "Informe o texto que o ATLAS deve falar." }, origin);
         return;
       }
-      const elevenKey = process.env.ELEVENLABS_API_KEY;
-      const voiceId = process.env.ELEVENLABS_VOICE_ID;
-      if (!elevenKey || !voiceId) {
-        sendJson(res, 503, { error: "A voz ElevenLabs ainda não está configurada no servidor." }, origin);
+      const cartesiaKey = process.env.CARTESIA_API_KEY;
+      const voiceId = process.env.CARTESIA_VOICE_ID;
+      if (!cartesiaKey || !voiceId) {
+        sendJson(res, 503, { error: "A voz Cartesia ainda não está configurada no servidor. Configure CARTESIA_API_KEY e CARTESIA_VOICE_ID no Render." }, origin);
         return;
       }
       try {
-        const voiceResponse = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId), {
+        const voiceResponse = await fetch("https://api.cartesia.ai/tts/bytes", {
           method: "POST",
-          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+          headers: { "Authorization": "Bearer " + cartesiaKey, "Cartesia-Version": "2026-08-14", "Content-Type": "application/json", "Accept": "audio/*" },
           body: JSON.stringify({
-            text: ttsBody.text.trim().slice(0, 4000),
-            model_id: "eleven_multilingual_v2",
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+            transcript: ttsBody.text.trim().slice(0, 4000),
+            model_id: process.env.CARTESIA_MODEL || "sonic-3.6",
+            voice: voiceId,
+            language: "pt-BR",
+            output_format: { container: "wav", encoding: "pcm_s16le", sample_rate: 44100 },
+            generation_config: { volume: 1, speed: 1 }
           }),
           signal: AbortSignal.timeout(60_000)
         });
         if (!voiceResponse.ok) {
           const statusCode = voiceResponse.status;
+          let detail = "";
+          try { detail = (await voiceResponse.clone().text()).slice(0, 180); } catch {}
           const errorMessage = statusCode === 401 || statusCode === 403
-            ? "A ElevenLabs recusou a chave ou a permissão de síntese de voz (HTTP " + statusCode + ")."
+            ? "A Cartesia recusou a chave ou a permissão (HTTP " + statusCode + "). Confira CARTESIA_API_KEY no Render."
             : statusCode === 404
-              ? "O Voice ID não foi encontrado na ElevenLabs (HTTP 404)."
+              ? "A voz ou o recurso não foi encontrado na Cartesia (HTTP 404). Confira CARTESIA_VOICE_ID."
               : statusCode === 429
-                ? "A ElevenLabs atingiu o limite disponível (HTTP 429). Tente novamente mais tarde."
-                : statusCode === 400
-                  ? "A ElevenLabs recusou o pedido (HTTP 400). Confira o Voice ID, o modelo e as permissões da conta."
-                  : "A ElevenLabs recusou a geração da voz (HTTP " + statusCode + ").";
+                ? "A Cartesia atingiu o limite de uso (HTTP 429). Tente novamente mais tarde."
+                : "A Cartesia recusou a geração da voz (HTTP " + statusCode + ")." + (detail ? " " + detail : "");
           sendJson(res, statusCode === 429 ? 429 : 502, { error: errorMessage }, origin);
           return;
         }
         const audio = Buffer.from(await voiceResponse.arrayBuffer());
         res.writeHead(200, {
-          "Content-Type": "audio/mpeg",
+          "Content-Type": voiceResponse.headers.get("content-type") || "audio/wav",
           "Content-Length": audio.length,
           "Cache-Control": "no-store",
           "X-Content-Type-Options": "nosniff"
         });
         res.end(audio);
       } catch {
-        sendJson(res, 502, { error: "Falha de conexão com a ElevenLabs. Tente novamente." }, origin);
+        sendJson(res, 502, { error: "Falha de conexão com a Cartesia. Tente novamente." }, origin);
       }
     });
     return;
