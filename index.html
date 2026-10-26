@@ -575,6 +575,31 @@
       }
     }
 
+
+    /* Holographic grid: brighter, sharper lines while preserving the dark blue base. */
+    body { position:relative; isolation:isolate; }
+    body::before {
+      content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background-image:
+        linear-gradient(rgba(15,111,201,.19) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15,111,201,.19) 1px, transparent 1px);
+      background-size:37px 37px;
+      background-position:center top;
+      opacity:1;
+    }
+    body::after {
+      content:""; position:fixed; z-index:-1; pointer-events:none;
+      left:-18%; right:-18%; bottom:-2px; height:27vh;
+      background-image:
+        linear-gradient(rgba(0,151,255,.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,151,255,.25) 1px, transparent 1px);
+      background-size:100% 25px, 31px 100%;
+      transform:perspective(220px) rotateX(35deg);
+      transform-origin:top center;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.9), transparent 100%);
+      opacity:.95;
+    }
+
 </style>
 </head>
 <body>
