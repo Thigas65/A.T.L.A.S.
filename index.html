@@ -835,6 +835,25 @@
     }
 
   
+    /* Selected image thumbnail inside the message composer. */
+    .chat-form { position:relative !important; }
+    .chat-image-preview {
+      position:absolute !important; top:8px !important; left:12px !important;
+      display:flex; align-items:flex-start; width:64px; height:60px; z-index:3;
+    }
+    .chat-image-preview[hidden] { display:none !important; }
+    .chat-image-preview img {
+      display:block; width:58px; height:58px; object-fit:cover;
+      border-radius:10px; border:1px solid rgba(0,207,255,.8);
+      box-shadow:0 0 12px rgba(0,160,255,.2);
+    }
+    .chat-image-remove {
+      position:absolute; top:-6px; right:-2px; display:grid; place-items:center;
+      width:22px; height:22px; padding:0; border-radius:50%;
+      border:1px solid rgba(255,255,255,.8); background:#12304c; color:#fff;
+      font-size:18px; line-height:1; cursor:pointer;
+    }
+    .chat-form.has-image-preview { padding-top:76px !important; }
     /* Keep the chat hidden after replies; only the launcher can open it. */
     .chat-panel { display:none !important; }
     .chat-panel.atlas-chat-open { display:flex !important; }
@@ -934,6 +953,7 @@
         </div>
         <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
         <form class="chat-form" id="chat-form">
+          <div class="chat-image-preview" id="chat-image-preview" hidden></div>
           <label class="sr-only" for="chat-input">Mensagem para o ATLAS</label>
           <button class="chat-attach" id="chat-attach" type="button" aria-label="Anexar imagem" title="Anexar imagem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input class="chat-file-input" id="chat-image-input" type="file" accept="image/*" hidden><textarea id="chat-input" name="message" maxlength="4000" rows="1" placeholder="Mensagem para o ATLAS..." autocomplete="off"></textarea><button class="nav-button chat-mic" type="button" aria-label="Áudio" title="Falar com o ATLAS"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg></button>
           <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem">
@@ -960,7 +980,7 @@
       <button class="feature-card" type="button" data-menu-action="lab"><span class="feature-icon folder-icon">▱</span><span class="feature-copy"><strong>Projetos e Tarefas</strong><small>Organize suas ideias,<br>metas e próximos passos.</small></span><span class="feature-arrow">›</span></button>
     </aside>
   </div>
-  <script src="./app.js?v=20261026-chat-toggle-5" defer></script>
+  <script src="./app.js?v=20261026-image-preview-1" defer></script>
   <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(() => {}));</script>
 </body>
 </html>
