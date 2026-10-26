@@ -1142,7 +1142,7 @@
               streamedAnswer += event.text;
               speechBuffer += event.text;
               // Só envia frases completas para a voz; a primeira começa antes de terminar a resposta.
-              const speechParts = speechBuffer.match(/^([\\s\\S]*?[.!?](?:["'”’)]*)?(?:\\s+|$))/);
+              const speechParts = speechBuffer.match(/^([\s\S]*?[.!?](?:["'”’)]*)?(?:\s+|$))/);
               if (speechParts && speechParts[1].trim()) {
                 const spokenPart = speechParts[1].trim();
                 speechBuffer = speechBuffer.slice(speechParts[1].length);
