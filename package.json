@@ -10,6 +10,9 @@
     "start": "node server.js",
     "start:api": "node server.js"
   },
+  "dependencies": {
+    "@huggingface/inference": "^4.7.1"
+  },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "http-server": "^14.1.1"
