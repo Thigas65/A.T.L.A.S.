@@ -1003,8 +1003,7 @@
 
   const sendDemoMessage = async (message) => {
     const imageToSend = pendingImage;
-    pendingImage = null;
-    if (chatImageInput) chatImageInput.value = "";
+    clearPendingImage();
     const displayMessage = imageToSend ? (message.trim() || "O que aparece nesta imagem?") + "\\n[Imagem anexada: " + imageToSend.name + "]" : message;
     const localAnswer = imageToSend ? null : getLocalToolAnswer(message);
     addChatMessage(displayMessage, "user");
