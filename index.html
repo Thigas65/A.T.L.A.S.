@@ -345,6 +345,76 @@
       content: ""; position: fixed; inset: 0; pointer-events: none;
       background: radial-gradient(ellipse at 50% 38%, rgba(0,174,255,.08), transparent 52%);
     }
+  
+    /* Interface mobile ATLAS: conversa limpa, núcleo pequeno e fixo visualmente. */
+    @media (max-width: 600px) {
+      body { overflow: hidden; background: #080d18; }
+      body::before, body::after { opacity: .12; }
+      .app { display: block; width: 100%; height: 100dvh; min-height: 0; overflow: hidden; }
+      .rail.left, .rail.right, .right-panel { display: none !important; }
+      main {
+        width: 100%; height: 100dvh; min-height: 0; overflow: hidden;
+        display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+        text-align: left; padding: 12px 12px max(8px, env(safe-area-inset-bottom));
+        gap: 0;
+      }
+      .menu-toggle { top: 10px; left: 10px; width: 40px; height: 40px; border-radius: 13px; }
+      .core-wrap {
+        width: 42px; height: 42px; min-height: 42px; flex: 0 0 42px;
+        margin: 0 auto 8px; transform: none; filter: none;
+      }
+      .core-wrap .orbit { display: none; }
+      .core, .core-mark { width: 100%; height: 100%; }
+      .core-mark svg { animation: none !important; filter: drop-shadow(0 0 5px rgba(0,210,255,.25)); }
+      .core-mark .nucleus-spin, .core-mark .nucleus-counterspin { animation: none !important; }
+      main > .eyebrow, main > h1, main > .subtitle, main > .status, main > .hint,
+      main > .permission-note { display: none !important; }
+      .chat-panel {
+        width: 100%; min-width: 0; flex: 1 1 auto; min-height: 0;
+        display: flex; flex-direction: column; margin: 0; overflow: hidden;
+      }
+      .chat-heading { flex: 0 0 auto; margin: 0 2px 8px; font-size: 10px; }
+      .chat-log {
+        flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto;
+        gap: 12px; padding: 8px 2px 16px; margin: 0;
+        overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+      }
+      .chat-message { max-width: 92%; padding: 11px 13px; border-radius: 16px; font-size: 14px; line-height: 1.55; }
+      .chat-message.atlas { background: transparent; border-color: transparent; padding-left: 2px; color: #e2edf9; }
+      .chat-message.user { border-radius: 18px; }
+      .chat-sources { width: 100%; }
+      .chat-source-card { padding: 11px 12px; }
+      .chat-form {
+        flex: 0 0 auto; width: 100%; min-height: 54px; height: auto; max-height: 150px;
+        padding: 5px 6px; gap: 5px; align-items: flex-end;
+        border: 1px solid rgba(145,160,181,.32); border-radius: 25px;
+        background: #171d29; box-shadow: none;
+      }
+      .chat-form:focus-within { border-color: rgba(70,231,255,.6); box-shadow: 0 0 0 1px rgba(70,231,255,.08); }
+      .chat-form .chat-attach, .chat-form .chat-mic, .chat-form button[type="submit"] {
+        width: 40px; height: 40px; min-width: 40px; flex: 0 0 40px; border-radius: 50%;
+      }
+      .chat-form .chat-attach { border: 0; background: transparent; color: #b8c7da; }
+      .chat-form .chat-mic { background: transparent; color: #b8c7da; border: 0; }
+      .chat-form textarea {
+        min-height: 40px; max-height: 112px; padding: 10px 5px; font-size: 15px;
+        line-height: 1.35; border: 0; overflow-y: auto;
+      }
+      .chat-form button[type="submit"] { background: #e8f0fb; color: #101827; }
+      .chat-form button[type="submit"] svg { width: 21px; height: 21px; }
+      .chat-note { display: none; }
+      .app.chat-mode main, .app.settings-mode main, .app.help-mode main, .app.feature-mode main { padding: 12px 12px max(8px, env(safe-area-inset-bottom)); }
+      .app.chat-mode .view-title, .app.settings-mode .view-title, .app.help-mode .view-title, .app.feature-mode .view-title {
+        display: block; text-align: center; font-size: 15px; margin: 2px 0 8px;
+      }
+      .app.chat-mode .chat-panel { width: 100%; flex: 1 1 auto; min-height: 0; }
+      .app.chat-mode .chat-log { max-height: none; min-height: 0; }
+      .app.chat-mode .chat-heading { display: none; }
+      .app.chat-mode .chat-note { display: none; }
+      .app.settings-mode .settings-panel, .app.help-mode .settings-panel { width: 100%; margin-top: 0; }
+      .app.feature-mode .feature-placeholder { width: 100%; }
+    }
+
   </style>
 </head>
 <body>
