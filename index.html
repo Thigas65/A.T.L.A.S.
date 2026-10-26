@@ -647,7 +647,37 @@
       }
     }
 
-</style>
+
+    /* Ajustes ATLAS: núcleo centralizado, grade holográfica e navegação móvel. */
+    .core-wrap { transform: none !important; }
+    @media (min-width: 601px) { main { justify-content: center; } .core-wrap { margin: 0 auto 18px; } }
+    @media (max-width: 600px) {
+      body::before, body::after { opacity: .42; }
+      .app { display:grid !important; grid-template-columns:54px minmax(0,1fr) !important; }
+      .rail.left { display:flex !important; position:relative; z-index:3; padding:62px 4px 12px; margin:0; border-radius:0; border-width:0 1px 0 0; background:rgba(1,14,38,.72); }
+      .rail.left .reference-brand { display:flex; justify-content:center; padding:0 0 12px; height:auto; font-size:0; }
+      .rail.left .reference-brand-core { width:22px; height:22px; }
+      .rail.left .nav-button { display:flex; width:44px; min-height:44px; height:44px; padding:0; justify-content:center; border-radius:12px; }
+      .rail.left .nav-button span, .rail-status { display:none !important; }
+      .rail.left .nav-button svg { width:21px; height:21px; }
+      .rail.right, .right-panel { display:none !important; }
+      main { width:auto; height:100dvh; min-height:0; padding:60px 10px 10px !important; overflow:hidden; }
+      .core-wrap { position:relative !important; top:auto !important; left:auto !important; transform:none !important; width:min(66vw,260px) !important; height:auto !important; aspect-ratio:1; margin:0 auto 10px !important; flex:0 0 auto; }
+      .core-wrap .orbit { display:block !important; }
+      .core-wrap .core-mark { display:grid !important; }
+      .core-wrap .core { width:auto !important; height:auto !important; }
+      .chat-panel { position:relative !important; left:auto !important; bottom:auto !important; width:100% !important; flex:1 1 auto; min-height:0; margin:0; }
+      .chat-heading { display:none !important; } .chat-log { display:none; }
+      .chat-form { min-height:56px; height:auto; max-height:130px; padding:5px 7px; gap:5px; border:1px solid rgba(0,207,255,.6); border-radius:28px; background:rgba(0,13,39,.94); }
+      .chat-form textarea { font-size:14px; border-left:0; padding-left:8px; }
+      .chat-form .chat-attach, .chat-form .chat-mic, .chat-form button[type="submit"] { width:38px; height:38px; min-width:38px; flex-basis:38px; }
+      .chat-form .chat-mic { border:1px solid rgba(0,207,255,.6); color:#00eaff; background:rgba(0,63,139,.35); }
+      .chat-form button[type="submit"] { background:transparent; color:#00eaff; }
+      .menu-toggle { display:none !important; }
+    }
+    body.tv-mode .core-wrap { transform:none !important; }
+
+  </style>
 </head>
 <body>
   <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu ATLAS" aria-expanded="false" aria-controls="atlas-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
