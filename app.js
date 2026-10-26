@@ -427,6 +427,21 @@
     }
   });
 
+  const chatPanel = document.querySelector(".chat-panel");
+  const chatLauncher = document.querySelector("#chat-launcher");
+  const setChatOpen = (open) => {
+    if (!chatPanel) return;
+    chatPanel.classList.toggle("atlas-chat-open", Boolean(open));
+    document.body.classList.toggle("atlas-chat-visible", Boolean(open));
+    if (chatLauncher) {
+      chatLauncher.setAttribute("aria-expanded", String(Boolean(open)));
+      chatLauncher.setAttribute("aria-label", open ? "Fechar conversa com ATLAS" : "Abrir conversa com ATLAS");
+      chatLauncher.title = open ? "Fechar conversa" : "Abrir conversa com ATLAS";
+    }
+    if (open) window.setTimeout(() => document.querySelector("#chat-input")?.focus({ preventScroll: true }), 80);
+  };
+  chatLauncher?.addEventListener("click", () => setChatOpen(!chatPanel?.classList.contains("atlas-chat-open")));
+  document.querySelector("#clear-chat")?.addEventListener("click", () => setChatOpen(false));
   const chatForm = document.querySelector("#chat-form");
   const chatInput = document.querySelector("#chat-input");
   const chatAttachButton = document.querySelector("#chat-attach");
