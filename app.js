@@ -1161,8 +1161,8 @@
     // Libera blocos de fala enquanto a IA ainda gera o restante.
     // Agrupa várias frases para a voz soar contínua, em vez de frase por frase.
     const flushSpeechBuffer = (force = false) => {
-      const minChunk = 170;
-      const maxChunk = 290;
+      const minChunk = 360;
+      const maxChunk = 620;
       while (speechBuffer.trim()) {
         const text = speechBuffer;
         let cutAt = -1;
