@@ -141,53 +141,64 @@
     streamSpeechRunning = false;
     coreWrap?.classList.remove("is-speaking");
   };
+  // Gera cada áudio assim que o trecho entra na fila, em paralelo com a fala atual.
+  // Isso evita esperar o áudio seguinte só depois que o anterior termina.
+  const requestSpeechAudio = async (text, session) => {
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "audio/*, application/json" },
+        body: JSON.stringify({ text: String(text).slice(0, 4000) }),
+        signal: AbortSignal.timeout(30000)
+      });
+      if (session !== streamSpeechSession || !response.ok || !(response.headers.get("content-type") || "").includes("audio/")) return null;
+      return await response.blob();
+    } catch (_) { return null; }
+  };
   const enqueueStreamSpeech = (text) => {
     const voiceSetting = document.querySelector("#voice-enabled");
     const chunk = String(text || "").trim();
     if (!chunk || (voiceSetting && !voiceSetting.checked)) return;
-    streamSpeechQueue.push(chunk);
+    const session = streamSpeechSession;
+    streamSpeechQueue.push({ text: chunk, audioPromise: requestSpeechAudio(chunk, session) });
     if (!streamSpeechRunning) void drainStreamSpeech();
   };
-  const playSpeechChunk = async (text, session) => {
+  const playSpeechChunk = async (item, session) => {
     if (session !== streamSpeechSession) return;
-    // Tenta a voz personalizada em cada frase; a voz do navegador é apenas alternativa.
-    try {
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "audio/mpeg, application/json" },
-        body: JSON.stringify({ text: String(text).slice(0, 1200) }),
-        signal: AbortSignal.timeout(18000)
-      });
-      if (session !== streamSpeechSession) return;
-      if (response.ok && (response.headers.get("content-type") || "").includes("audio/")) {
-        const blob = await response.blob();
-        if (session !== streamSpeechSession) return;
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        atlasAudio = audio;
-        audio.onplay = () => {
-          coreWrap?.classList.add("is-speaking");
-          showVoiceStatus("Voz: personalizada ATLAS");
+    const text = item.text;
+    // O áudio foi solicitado no momento em que o trecho chegou, não no fim da fala anterior.
+    const blob = await item.audioPromise;
+    if (session !== streamSpeechSession) return;
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      atlasAudio = audio;
+      audio.preload = "auto";
+      audio.onplay = () => {
+        coreWrap?.classList.add("is-speaking");
+        showVoiceStatus("Voz: personalizada ATLAS");
+      };
+      await new Promise((resolve) => {
+        let finished = false;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          URL.revokeObjectURL(url);
+          if (atlasAudio === audio) atlasAudio = null;
+          coreWrap?.classList.remove("is-speaking");
+          resolve();
         };
-        await new Promise((resolve) => {
-          const finish = () => {
-            URL.revokeObjectURL(url);
-            if (atlasAudio === audio) atlasAudio = null;
-            coreWrap?.classList.remove("is-speaking");
-            resolve();
-          };
-          audio.onended = finish;
-          audio.onerror = finish;
-          audio.play().catch(finish);
-        });
-        return;
-      }
-    } catch (_) {}
+        audio.onended = finish;
+        audio.onerror = finish;
+        audio.play().catch(finish);
+      });
+      return;
+    }
     if (session !== streamSpeechSession || !("speechSynthesis" in window)) return;
     await new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
-      utterance.rate = 1.05;
+      utterance.rate = 1.08;
       let settled = false;
       const finish = () => {
         if (settled) return;
