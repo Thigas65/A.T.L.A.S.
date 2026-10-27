@@ -332,10 +332,28 @@
       if (conversationActive && !assistantSpeaking && !activeRecognition && document.visibilityState === "visible") startRecognition("conversation");
     }, 500);
   };
+  const openInstagramInbox = () => {
+    showMessage("Abrindo as conversas do Instagram…");
+    // O Android/Chrome pode encaminhar este link ao app instalado; caso contrário,
+    // a caixa de entrada abre no site oficial. O ATLAS não acessa a conta nem a senha.
+    window.location.href = "https://www.instagram.com/direct/inbox/";
+  };
+
+  const isOpenInstagramCommand = (value) => {
+    const normalized = normalizeVoiceText(String(value || ""));
+    return normalized.includes("instagram") &&
+      /\b(abrir|abre|abra|abre|acessar|acesse|entrar|mostra|mostrar)\b/.test(normalized) &&
+      /(conversa|mensagem|direct|dm|instagram)/.test(normalized);
+  };
+
   const processVoiceCommand = async (transcript) => {
     const command = transcript.trim();
     if (!command) return;
     renewConversationTimer();
+    if (isOpenInstagramCommand(command)) {
+      openInstagramInbox();
+      return;
+    }
     if (chatInput) {
       chatInput.value = "";
       await sendDemoMessage(command);
