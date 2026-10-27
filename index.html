@@ -898,6 +898,97 @@
     .chat-panel.atlas-chat-open .chat-note { display:none !important; }
     .chat-launcher { display:none !important; }
 
+  
+    /* Correção mobile: mensagens visíveis e compositor ancorado no rodapé. */
+    @media (max-width: 900px) {
+      .chat-panel {
+        display:flex !important;
+        position:fixed !important;
+        z-index:90 !important;
+        top:clamp(220px, 32vh, 390px) !important;
+        bottom:calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        left:12px !important;
+        right:12px !important;
+        width:auto !important;
+        max-width:none !important;
+        height:auto !important;
+        max-height:none !important;
+        min-height:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        flex-direction:column !important;
+        gap:8px !important;
+        border:0 !important;
+        border-radius:0 !important;
+        background:transparent !important;
+        box-shadow:none !important;
+        overflow:hidden !important;
+        pointer-events:none !important;
+      }
+      .chat-panel .chat-heading,
+      .chat-panel .chat-note { display:none !important; }
+      .chat-panel .chat-log {
+        display:flex !important;
+        visibility:visible !important;
+        flex:1 1 auto !important;
+        width:100% !important;
+        min-width:0 !important;
+        min-height:0 !important;
+        max-height:none !important;
+        flex-direction:column !important;
+        overflow-y:auto !important;
+        margin:0 !important;
+        padding:8px 2px 12px !important;
+        gap:12px !important;
+        background:transparent !important;
+        pointer-events:auto !important;
+        overscroll-behavior:contain !important;
+        -webkit-overflow-scrolling:touch !important;
+      }
+      .chat-panel .chat-message {
+        display:block !important;
+        visibility:visible !important;
+        max-width:94% !important;
+        font-size:15px !important;
+        line-height:1.55 !important;
+      }
+      .chat-panel .chat-form {
+        display:flex !important;
+        position:relative !important;
+        flex:0 0 auto !important;
+        width:100% !important;
+        min-width:0 !important;
+        min-height:64px !important;
+        height:auto !important;
+        max-height:140px !important;
+        margin:0 !important;
+        padding:6px 8px !important;
+        align-items:center !important;
+        gap:5px !important;
+        border:2px solid #00cfff !important;
+        border-radius:40px !important;
+        background:rgba(0,12,35,.97) !important;
+        box-shadow:0 0 19px rgba(0,151,255,.35) !important;
+        pointer-events:auto !important;
+      }
+      .chat-panel .chat-form .chat-attach,
+      .chat-panel .chat-form .chat-mic,
+      .chat-panel .chat-form button[type="submit"] {
+        width:42px !important;
+        height:42px !important;
+        min-width:42px !important;
+        flex:0 0 42px !important;
+      }
+      .chat-panel .chat-form textarea {
+        flex:1 1 0 !important;
+        width:0 !important;
+        min-width:0 !important;
+        min-height:40px !important;
+        max-height:90px !important;
+        font-size:15px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
