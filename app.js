@@ -1147,6 +1147,33 @@
     let streamedAnswer = "";
     let speechBuffer = "";
     let streamSpeechStarted = false;
+    // Libera blocos de fala enquanto a IA ainda gera o restante.
+    // Agrupa várias frases para a voz soar contínua, em vez de frase por frase.
+    const flushSpeechBuffer = (force = false) => {
+      const minChunk = 170;
+      const maxChunk = 290;
+      while (speechBuffer.trim()) {
+        const text = speechBuffer;
+        let cutAt = -1;
+        const sentenceBoundary = /[.!?…]["')\]]*\s+/g;
+        let match;
+        while ((match = sentenceBoundary.exec(text)) !== null) {
+          const end = match.index + match[0].trimEnd().length;
+          if (end >= minChunk && end <= maxChunk) cutAt = end;
+          if (end > maxChunk) break;
+        }
+        if (cutAt < 0 && text.length >= maxChunk) {
+          const searchEnd = Math.min(text.length, maxChunk);
+          const space = text.lastIndexOf(" ", searchEnd);
+          if (space >= minChunk) cutAt = space;
+        }
+        if (cutAt < 0 && force) cutAt = text.length;
+        if (cutAt < 0) break;
+        const chunk = text.slice(0, cutAt).trim();
+        speechBuffer = text.slice(cutAt).trimStart();
+        if (chunk) enqueueStreamSpeech(chunk);
+      }
+    };
     stopStreamSpeech();
     assistantSpeaking = true;
     let liveMessage = null;
@@ -1192,8 +1219,8 @@
               const shouldFollow = chatLog && (chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 80);
               streamedAnswer += event.text;
               speechBuffer += event.text;
-              // A resposta será narrada em uma única faixa, sem pausas entre frases.
               streamSpeechStarted = true;
+              flushSpeechBuffer(false);
               if (liveMessage) liveMessage.textContent += event.text;
               if (chatLog && shouldFollow) chatLog.scrollTop = chatLog.scrollHeight;
               if (isFirstChunk) {
@@ -1260,8 +1287,16 @@
       }
 
       if (!streamedAnswer.trim()) throw new Error("A IA do ATLAS não retornou texto nesta resposta.");
-      const completeSpeech = String(streamedAnswer || speechBuffer || "").trim();
-      if (completeSpeech) enqueueStreamSpeech(completeSpeech);
+      // Envia o último bloco quando a IA termina; os anteriores já estão falando.
+      if (speechBuffer.trim()) {
+        if (!streamSpeechStarted) {
+          enqueueStreamSpeech(String(streamedAnswer || speechBuffer).trim());
+        } else {
+          flushSpeechBuffer(true);
+        }
+      } else if (!streamSpeechStarted && streamedAnswer.trim()) {
+        enqueueStreamSpeech(streamedAnswer.trim());
+      }
       addChatMessage(streamedAnswer.trim(), "atlas");
       showMessage("Resposta recebida pela IA do ATLAS.");
       if (status) status.textContent = "IA do ATLAS conectada";
