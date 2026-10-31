@@ -88,12 +88,12 @@ class MainActivity : Activity() {
             settings.mediaPlaybackRequiresUserGesture = false
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                    progress.setVisibility(View.VISIBLE)
-                    status.setVisibility(View.GONE)
+                    this@MainActivity.progress.visibility = View.VISIBLE
+                    this@MainActivity.status.visibility = View.GONE
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    progress.setVisibility(View.GONE)
+                    this@MainActivity.progress.visibility = View.GONE
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -165,7 +165,7 @@ class MainActivity : Activity() {
 
     private fun loadAtlas(url: String) {
         root.findViewWithTag<View>("address_setup")?.let { root.removeView(it) }
-        status.setVisibility(View.GONE)
+        this@MainActivity.status.visibility = View.GONE
         webView.setVisibility(View.VISIBLE)
         webView.loadUrl(url)
     }
