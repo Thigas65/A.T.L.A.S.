@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ATLAS Companion</string>
+    <string name="app_name">ATLAS</string>
     <string name="accessibility_service_label">ATLAS para Instagram</string>
-    <string name="accessibility_description">Ajuda o usuário a abrir o Instagram e preparar mensagens mediante ação explícita. Não envia mensagens sozinho.</string>
+    <string name="accessibility_description">Serviço experimental inativo por padrão. Não lê mensagens nem executa ações automáticas.</string>
 </resources>
