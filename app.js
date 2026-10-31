@@ -121,14 +121,23 @@
   };
 
 
-  // Fala em partes durante a geração do texto, mantendo a ordem e evitando sobreposição.
+  // Fala em partes durante a geração do texto, com áudio pré-carregado e agendamento contínuo.
   let streamSpeechQueue = [];
   let streamSpeechRunning = false;
   let streamSpeechSession = 0;
   let streamSpeechResolve = null;
+  let streamAudioContext = null;
+  let streamAudioNextTime = 0;
+  let streamAudioSources = new Set();
+  let streamAudioLastDone = Promise.resolve();
+
   const stopStreamSpeech = () => {
     streamSpeechSession++;
     streamSpeechQueue = [];
+    for (const source of streamAudioSources) {
+      try { source.stop(); } catch (_) {}
+    }
+    streamAudioSources.clear();
     if (atlasAudio) {
       atlasAudio.pause();
       atlasAudio = null;
@@ -139,10 +148,12 @@
       streamSpeechResolve = null;
     }
     streamSpeechRunning = false;
+    if (streamAudioContext) streamAudioNextTime = streamAudioContext.currentTime;
+    streamAudioLastDone = Promise.resolve();
     coreWrap?.classList.remove("is-speaking");
   };
-  // Gera cada áudio assim que o trecho entra na fila, em paralelo com a fala atual.
-  // Isso evita esperar o áudio seguinte só depois que o anterior termina.
+
+  // Cada pedido começa assim que o trecho chega; a geração ocorre em paralelo.
   const requestSpeechAudio = async (text, session) => {
     try {
       const response = await fetch("/api/tts", {
@@ -155,6 +166,7 @@
       return await response.blob();
     } catch (_) { return null; }
   };
+
   const enqueueStreamSpeech = (text) => {
     const voiceSetting = document.querySelector("#voice-enabled");
     const chunk = String(text || "").trim();
@@ -163,42 +175,15 @@
     streamSpeechQueue.push({ text: chunk, audioPromise: requestSpeechAudio(chunk, session) });
     if (!streamSpeechRunning) void drainStreamSpeech();
   };
-  const playSpeechChunk = async (item, session) => {
-    if (session !== streamSpeechSession) return;
-    const text = item.text;
-    // O áudio foi solicitado no momento em que o trecho chegou, não no fim da fala anterior.
-    const blob = await item.audioPromise;
-    if (session !== streamSpeechSession) return;
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      atlasAudio = audio;
-      audio.preload = "auto";
-      audio.onplay = () => {
-        coreWrap?.classList.add("is-speaking");
-        showVoiceStatus("Voz: personalizada ATLAS");
-      };
-      await new Promise((resolve) => {
-        let finished = false;
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          URL.revokeObjectURL(url);
-          if (atlasAudio === audio) atlasAudio = null;
-          coreWrap?.classList.remove("is-speaking");
-          resolve();
-        };
-        audio.onended = finish;
-        audio.onerror = finish;
-        audio.play().catch(finish);
-      });
-      return;
-    }
+
+  const speakWithBrowserFallback = async (text, session) => {
     if (session !== streamSpeechSession || !("speechSynthesis" in window)) return;
+    await streamAudioLastDone;
+    if (session !== streamSpeechSession) return;
     await new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
-      utterance.rate = 1.08;
+      utterance.rate = 1.05;
       let settled = false;
       const finish = () => {
         if (settled) return;
@@ -220,13 +205,62 @@
       else finish();
     });
   };
+
+  const playSpeechChunk = async (item, session) => {
+    if (session !== streamSpeechSession) return;
+    const blob = await item.audioPromise;
+    if (session !== streamSpeechSession) return;
+
+    if (blob && window.AudioContext) {
+      try {
+        if (!streamAudioContext || streamAudioContext.state === "closed") {
+          streamAudioContext = new AudioContext();
+          streamAudioNextTime = streamAudioContext.currentTime;
+        }
+        if (streamAudioContext.state === "suspended") await streamAudioContext.resume();
+        const audioBuffer = await streamAudioContext.decodeAudioData(await blob.arrayBuffer());
+        if (session !== streamSpeechSession) return;
+
+        const source = streamAudioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(streamAudioContext.destination);
+        const startAt = Math.max(streamAudioContext.currentTime + 0.035, streamAudioNextTime);
+        streamAudioNextTime = startAt + audioBuffer.duration;
+
+        let resolveDone;
+        const done = new Promise((resolve) => { resolveDone = resolve; });
+        streamAudioLastDone = done;
+        streamAudioSources.add(source);
+        source.onended = () => {
+          streamAudioSources.delete(source);
+          if (streamAudioSources.size === 0) coreWrap?.classList.remove("is-speaking");
+          resolveDone();
+        };
+        coreWrap?.classList.add("is-speaking");
+        showVoiceStatus("Voz: personalizada ATLAS");
+        source.start(startAt);
+        return;
+      } catch (_) {
+        // Se a reprodução agendada não estiver disponível, usa a voz alternativa.
+      }
+    }
+
+    await speakWithBrowserFallback(item.text, session);
+  };
+
   const drainStreamSpeech = async () => {
     if (streamSpeechRunning) return;
     streamSpeechRunning = true;
     const session = streamSpeechSession;
-    while (streamSpeechQueue.length && session === streamSpeechSession) {
-      const chunk = streamSpeechQueue.shift();
-      await playSpeechChunk(chunk, session);
+    while (session === streamSpeechSession) {
+      while (streamSpeechQueue.length && session === streamSpeechSession) {
+        const chunk = streamSpeechQueue.shift();
+        await playSpeechChunk(chunk, session);
+      }
+      if (session !== streamSpeechSession) break;
+      const pendingAudio = streamAudioLastDone;
+      await pendingAudio;
+      if (!streamSpeechQueue.length) break;
     }
     if (session === streamSpeechSession) {
       streamSpeechRunning = false;
@@ -1161,8 +1195,8 @@
     // Libera blocos de fala enquanto a IA ainda gera o restante.
     // Agrupa várias frases para a voz soar contínua, em vez de frase por frase.
     const flushSpeechBuffer = (force = false) => {
-      const minChunk = 360;
-      const maxChunk = 620;
+      const minChunk = 180;
+      const maxChunk = 360;
       while (speechBuffer.trim()) {
         const text = speechBuffer;
         let cutAt = -1;
