@@ -1,20 +1,26 @@
-# ATLAS Companion (Android)
+# ATLAS para Android
 
-This is a separate Android companion project; it does not change the existing Render web app.
+Aplicativo Android nativo em Kotlin que abre a interface web existente do ATLAS em uma WebView segura. O servidor e o site do Render continuam separados e não são alterados por este módulo.
 
-## Current starter features
-- Opens the installed Instagram app, or the official Instagram website if the app is not installed.
-- Lets the user prepare and copy a message for manual review.
-- Includes a narrowly scoped accessibility-service scaffold, but it currently performs no UI inspection, clicks, reading, or sending.
+## Primeiro uso
+1. Abra o projeto `android-companion` no Android Studio.
+2. Aguarde a sincronização do Gradle.
+3. Execute no aparelho ou gere um APK de teste.
+4. Na primeira abertura, informe a URL HTTPS pública do serviço ATLAS no Render.
+5. O endereço fica salvo localmente no aparelho; use **Endereço** no topo para alterá-lo.
 
-## Important limits
-- This is not yet connected to the ATLAS website and is not an Instagram API integration.
-- No Instagram password or session cookie is requested or stored.
-- Messages are not sent automatically. The user reviews and sends them in Instagram.
-- Accessibility access must never be enabled for a service the user does not trust.
+## O que esta etapa faz
+- Reutiliza a interface e os recursos web do ATLAS já existentes.
+- Mantém JavaScript e armazenamento local do WebView habilitados para o funcionamento da interface.
+- Não coloca chaves de IA dentro do aplicativo.
+- Não altera o serviço web publicado.
+- Não pede senha do Instagram e não envia mensagens.
 
-## Build
-Open the android-companion folder in Android Studio and let Gradle sync. Build an APK from the Build menu. This repository does not include the Gradle wrapper yet, and the project has not been built or tested on a physical phone.
+## Limitações desta primeira etapa
+- A URL pública do serviço Render ainda precisa ser informada na primeira abertura.
+- Microfone/permissões nativas e integração profunda com recursos Android serão tratados e testados em etapa própria.
+- O projeto ainda precisa ser compilado e testado em aparelho real.
+- O repositório ainda não inclui Gradle Wrapper.
 
-## Next step
-After a successful build and local test, define a consent-based bridge between ATLAS web and this companion app. Any future accessibility actions should be limited to explicit user requests and should not send messages without confirmation.
+## Publicação
+A configuração de assinatura, Android App Bundle (AAB), testes e publicação na Play Store será feita depois que a compilação e o funcionamento básico forem validados.
