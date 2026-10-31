@@ -30,14 +30,17 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
 
     private val preferences by lazy { getSharedPreferences("atlas_app", MODE_PRIVATE) }
+    private val defaultAtlasUrl = "https://a-t-l-a-s-1.onrender.com"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(5, 12, 27)
         window.navigationBarColor = Color.rgb(5, 12, 27)
+        if (preferences.getString("atlas_url", null).isNullOrBlank()) {
+            preferences.edit().putString("atlas_url", defaultAtlasUrl).apply()
+        }
         showApp()
-        val savedUrl = preferences.getString("atlas_url", null)
-        if (!savedUrl.isNullOrBlank()) loadAtlas(savedUrl)
+        loadAtlas(preferences.getString("atlas_url", defaultAtlasUrl) ?: defaultAtlasUrl)
     }
 
     private fun showApp() {
@@ -112,7 +115,6 @@ class MainActivity : Activity() {
         root.addView(webView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
 
-        if (preferences.getString("atlas_url", null).isNullOrBlank()) showAddressSetup()
     }
 
     private fun showAddressSetup() {
