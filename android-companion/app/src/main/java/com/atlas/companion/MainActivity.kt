@@ -88,12 +88,12 @@ class MainActivity : Activity() {
             settings.mediaPlaybackRequiresUserGesture = false
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                    progress.visibility = View.VISIBLE
-                    status.visibility = View.GONE
+                    progress.setVisibility(View.VISIBLE)
+                    status.setVisibility(View.GONE)
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    progress.visibility = View.GONE
+                    progress.setVisibility(View.GONE)
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -118,8 +118,8 @@ class MainActivity : Activity() {
     }
 
     private fun showAddressSetup() {
-        status.visibility = View.VISIBLE
-        webView.visibility = View.GONE
+        status.setVisibility(View.VISIBLE)
+        webView.setVisibility(View.GONE)
         addressInput = EditText(this).apply {
             hint = "https://seu-atlas.onrender.com"
             setSingleLine(true)
@@ -165,8 +165,8 @@ class MainActivity : Activity() {
 
     private fun loadAtlas(url: String) {
         root.findViewWithTag<View>("address_setup")?.let { root.removeView(it) }
-        status.visibility = View.GONE
-        webView.visibility = View.VISIBLE
+        status.setVisibility(View.GONE)
+        webView.setVisibility(View.VISIBLE)
         webView.loadUrl(url)
     }
 
