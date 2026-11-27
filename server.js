@@ -300,7 +300,7 @@ const server = http.createServer(async (req, res) => {
     const cloudflareModel = process.env.CLOUDFLARE_AI_MODEL;
     const groqKey = process.env.GROQ_API_KEY;
     const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-    const godmod3BaseUrl = String(process.env.GODMOD3_API_URL || "").trim().replace(/\\/+$/, "");
+    const godmod3BaseUrl = String(process.env.GODMOD3_API_URL || "").trim().replace(/\/+$/, "");
     const godmod3Key = process.env.GODMOD3_API_KEY;
     const godmod3Model = process.env.GODMOD3_MODEL || "ultraplinian/fast";
     const godmod3Configured = Boolean(godmod3BaseUrl && godmod3Key);
