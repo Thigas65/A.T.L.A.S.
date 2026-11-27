@@ -77,7 +77,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), cartesiaConfigured: Boolean(process.env.CARTESIA_API_KEY && process.env.CARTESIA_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", webSearchConfigured: Boolean(process.env.TAVILY_API_KEY), build: "atlas-personality-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), cartesiaConfigured: Boolean(process.env.CARTESIA_API_KEY && process.env.CARTESIA_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", webSearchConfigured: Boolean(process.env.TAVILY_API_KEY), godmod3Configured: Boolean(process.env.GODMOD3_API_URL && process.env.GODMOD3_API_KEY), godmod3Model: process.env.GODMOD3_MODEL || "ultraplinian/fast", build: "atlas-godmod3-1" });
     return;
   }
 
@@ -300,6 +300,10 @@ const server = http.createServer(async (req, res) => {
     const cloudflareModel = process.env.CLOUDFLARE_AI_MODEL;
     const groqKey = process.env.GROQ_API_KEY;
     const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    const godmod3BaseUrl = String(process.env.GODMOD3_API_URL || "").trim().replace(/\\/+$/, "");
+    const godmod3Key = process.env.GODMOD3_API_KEY;
+    const godmod3Model = process.env.GODMOD3_MODEL || "ultraplinian/fast";
+    const godmod3Configured = Boolean(godmod3BaseUrl && godmod3Key);
     let webSearchContext = "";
     if (wantsWebSearch && process.env.TAVILY_API_KEY) {
       try {
@@ -345,12 +349,12 @@ const server = http.createServer(async (req, res) => {
         : message }
     ];
     const cloudflareConfigured = Boolean(cloudflareAccount && cloudflareToken && cloudflareModel);
-    if (!cloudflareConfigured && !groqKey) {
-      sendJson(res, 503, { error: "A IA não está configurada. No Render, configure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_AI_MODEL; GROQ_API_KEY é opcional como reserva." }, origin);
+    if (!cloudflareConfigured && !groqKey && !godmod3Configured) {
+      sendJson(res, 503, { error: "A IA não está configurada. Configure o provedor principal Cloudflare, GROQ_API_KEY ou a integração GODMOD3_API_URL + GODMOD3_API_KEY no servidor." }, origin);
       return;
     }
 
-    // Cloudflare Workers AI é o provedor principal; Groq é a alternativa.
+    // Ordem de tentativa: IA principal atual, GODMOD3 como alternativa adicional e Groq como reserva final.
     const providers = [
       ...(cloudflareConfigured ? [{
         name: "Cloudflare Workers AI",
@@ -358,6 +362,13 @@ const server = http.createServer(async (req, res) => {
         key: cloudflareToken,
         model: cloudflareModel,
         headers: { Authorization: "Bearer " + cloudflareToken }
+      }] : []),
+      ...(godmod3Configured ? [{
+        name: "GODMOD3 (ULTRAPLINIAN)",
+        url: godmod3BaseUrl + "/v1/chat/completions",
+        key: godmod3Key,
+        model: godmod3Model,
+        headers: { Authorization: "Bearer " + godmod3Key }
       }] : []),
       ...(groqKey ? [{
         name: "Groq",
@@ -479,7 +490,7 @@ const server = http.createServer(async (req, res) => {
 
     if (!completed && !res.headersSent) {
       sendJson(res, lastStatus === 429 ? 429 : 502, {
-        error: lastError + (groqKey ? " A IA reserva também não conseguiu responder." : " Configure GROQ_API_KEY para ativar a IA reserva.")
+        error: lastError + (providers.length > 1 ? " As outras alternativas configuradas também não conseguiram responder." : "")
       }, origin);
     }
   });
