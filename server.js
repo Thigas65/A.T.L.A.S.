@@ -77,7 +77,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/health" && req.method === "GET") {
-    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), cartesiaConfigured: Boolean(process.env.CARTESIA_API_KEY && process.env.CARTESIA_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", webSearchConfigured: Boolean(process.env.TAVILY_API_KEY), build: "atlas-personality-1" });
+    sendJson(res, 200, { ok: true, aiEnabled: process.env.ATLAS_AI_ENABLED === "true", keyConfigured: Boolean(process.env.CLOUDFLARE_API_TOKEN), primaryConfigured: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_AI_MODEL), fallbackConfigured: Boolean(process.env.GROQ_API_KEY), cartesiaConfigured: Boolean(process.env.CARTESIA_API_KEY && process.env.CARTESIA_VOICE_ID), model: process.env.CLOUDFLARE_AI_MODEL || "not-configured", webSearchConfigured: Boolean(process.env.TAVILY_API_KEY), g0dm0d3Configured: Boolean(process.env.G0DM0D3_API_URL && process.env.G0DM0D3_API_KEY), g0dm0d3Model: process.env.G0DM0D3_MODEL || "google/gemini-2.5-flash", build: "atlas-g0dm0d3-1" });
     return;
   }
 
@@ -300,6 +300,11 @@ const server = http.createServer(async (req, res) => {
     const cloudflareModel = process.env.CLOUDFLARE_AI_MODEL;
     const groqKey = process.env.GROQ_API_KEY;
     const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    const g0dm0d3BaseUrl = String(process.env.G0DM0D3_API_URL || "").trim().replace(/\/+$/, "");
+    const g0dm0d3Key = process.env.G0DM0D3_API_KEY;
+    const g0dm0d3OpenRouterKey = process.env.G0DM0D3_OPENROUTER_API_KEY;
+    const g0dm0d3Model = process.env.G0DM0D3_MODEL || "google/gemini-2.5-flash";
+    const g0dm0d3Configured = Boolean(g0dm0d3BaseUrl && g0dm0d3Key);
     let webSearchContext = "";
     if (wantsWebSearch && process.env.TAVILY_API_KEY) {
       try {
@@ -345,12 +350,12 @@ const server = http.createServer(async (req, res) => {
         : message }
     ];
     const cloudflareConfigured = Boolean(cloudflareAccount && cloudflareToken && cloudflareModel);
-    if (!cloudflareConfigured && !groqKey) {
-      sendJson(res, 503, { error: "A IA não está configurada. No Render, configure CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN e CLOUDFLARE_AI_MODEL; GROQ_API_KEY é opcional como reserva." }, origin);
+    if (!cloudflareConfigured && !groqKey && !g0dm0d3Configured) {
+      sendJson(res, 503, { error: "A IA não está configurada. Configure o provedor principal Cloudflare, GROQ_API_KEY ou a integração G0DM0D3_API_URL + G0DM0D3_API_KEY no servidor." }, origin);
       return;
     }
 
-    // Cloudflare Workers AI é o provedor principal; Groq é a alternativa.
+    // Ordem de tentativa: IA principal atual, G0DM0D3 (API oficial do repositório do vídeo) e Groq como reserva final.
     const providers = [
       ...(cloudflareConfigured ? [{
         name: "Cloudflare Workers AI",
@@ -358,6 +363,21 @@ const server = http.createServer(async (req, res) => {
         key: cloudflareToken,
         model: cloudflareModel,
         headers: { Authorization: "Bearer " + cloudflareToken }
+      }] : []),
+      ...(g0dm0d3Configured ? [{
+        name: "G0DM0D3 (API oficial)",
+        url: g0dm0d3BaseUrl + "/v1/chat/completions",
+        key: g0dm0d3Key,
+        model: g0dm0d3Model,
+        headers: { Authorization: "Bearer " + g0dm0d3Key },
+        extraBody: {
+          ...(g0dm0d3OpenRouterKey ? { openrouter_api_key: g0dm0d3OpenRouterKey } : {}),
+          godmode: false,
+          autotune: true,
+          parseltongue: false,
+          stm_modules: ["hedge_reducer", "direct_mode"],
+          contribute_to_dataset: false
+        }
       }] : []),
       ...(groqKey ? [{
         name: "Groq",
@@ -383,7 +403,8 @@ const server = http.createServer(async (req, res) => {
             messages,
             stream: body.stream === true,
             max_tokens: wantsDetailedAnswer ? 900 : 450,
-            temperature: 0.7
+            temperature: 0.7,
+            ...(provider.extraBody || {})
           }),
           signal: AbortSignal.timeout(90_000)
         });
@@ -409,7 +430,7 @@ const server = http.createServer(async (req, res) => {
             : provider.name + " está temporariamente indisponível.";
         // Quota/rate-limit, falha temporária ou erro do servidor: tenta o próximo provedor.
         if (providerResponse.status === 429 || providerResponse.status >= 500 || providerResponse.status === 408) continue;
-        if (providerIndex === 0 && groqKey && (providerResponse.status === 401 || providerResponse.status === 403)) continue;
+        if ((providerResponse.status === 401 || providerResponse.status === 403) && providerIndex < providers.length - 1) continue;
         break;
       }
 
@@ -479,7 +500,7 @@ const server = http.createServer(async (req, res) => {
 
     if (!completed && !res.headersSent) {
       sendJson(res, lastStatus === 429 ? 429 : 502, {
-        error: lastError + (groqKey ? " A IA reserva também não conseguiu responder." : " Configure GROQ_API_KEY para ativar a IA reserva.")
+        error: lastError + (providers.length > 1 ? " As outras alternativas configuradas também não conseguiram responder." : "")
       }, origin);
     }
   });
