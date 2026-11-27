@@ -76,44 +76,43 @@ Os testes de interface simulam a resposta da API para não consumir a cota real 
 - `netlify.toml` — configuração de publicação e funções do Netlify.
 - `tests/atlas.spec.js` — testes de navegador.
 
-## Integração opcional com GODMOD3.AI
+## Integração opcional com G0DM0D3 (repositório do vídeo)
 
-O servidor do ATLAS pode usar uma instância separada da API GODMOD3 como alternativa adicional de IA. A ordem de tentativa é:
+O backend do ATLAS pode consultar uma instância separada da API oficial do repositório [elder-plinius/G0DM0D3](https://github.com/elder-plinius/G0DM0D3). Esta é a API do projeto mostrado no vídeo, não o projeto aetherstate/GODMOD3.AI.
 
+A ordem de tentativa do ATLAS permanece:
 1. Cloudflare Workers AI (provedor principal atual).
-2. GODMOD3 / ULTRAPLINIAN (alternativa adicional).
+2. G0DM0D3 (provedor adicional).
 3. Groq (reserva atual).
 
-O ATLAS se conecta à API por HTTP e **não copia o código-fonte do GODMOD3 para este repositório**. A instância GODMOD3 precisa ser hospedada separadamente; este commit apenas prepara o ATLAS para consumi-la.
+O ATLAS usa o endpoint OpenAI-compatible `/v1/chat/completions` do G0DM0D3. Para manter a integração focada em qualidade e clareza, envia `autotune: true`, `godmode: false`, `parseltongue: false`, `stm_modules: ["hedge_reducer", "direct_mode"]` e `contribute_to_dataset: false`. Assim, o ATLAS não ativa os mecanismos de jailbreak/obfuscação nem envia conversas para o dataset opcional.
 
-### 1. Hospedar a API GODMOD3
+### 1. Hospedar a API G0DM0D3
 
-Siga a documentação oficial do projeto [GODMOD3.AI](https://github.com/aetherstate/GODMOD3.AI), usando o Dockerfile/API do próprio repositório. Na configuração do serviço GODMOD3, defina os segredos:
+Siga o README e a documentação API.md do repositório original. A API pode ser executada em um host de contêiner compatível com Node/Docker. Configure no serviço G0DM0D3:
+- `GODMODE_API_KEY`: chave privada para autenticar o ATLAS.
+- `OPENROUTER_API_KEY`: chave do provedor de modelos usada pelo G0DM0D3 no servidor.
 
-- `GODMODE_API_KEY`: chave privada que o ATLAS usará para autenticar.
-- `OPENROUTER_API_KEY`: chave usada pelo GODMOD3 para consultar os modelos.
+Não deixe a autenticação desativada em um serviço público. Não habilite contribuição de conversas para o dataset.
 
-Não publique essas chaves no GitHub nem no navegador. Não habilite a opção de contribuição para dataset; o ATLAS não envia essa opção nas requisições.
+### 2. Configurar o ATLAS
 
-### 2. Configurar o serviço do ATLAS
-
-No painel do serviço que hospeda o backend do ATLAS (por exemplo, Environment no Render), adicione:
-
+No ambiente do backend do ATLAS (por exemplo, Environment no Render), adicione:
 | Variável | Valor |
 |---|---|
-| `GODMOD3_API_URL` | URL base pública da API GODMOD3, sem `/v1` no final |
-| `GODMOD3_API_KEY` | O mesmo valor definido em `GODMODE_API_KEY` no serviço GODMOD3 |
-| `GODMOD3_MODEL` | `ultraplinian/fast` |
+| `G0DM0D3_API_URL` | URL base pública da API, sem `/v1` no final |
+| `G0DM0D3_API_KEY` | Mesmo segredo configurado como `GODMODE_API_KEY` no serviço G0DM0D3 |
+| `G0DM0D3_MODEL` | ID de um modelo individual disponível no OpenRouter, por exemplo `google/gemini-2.5-flash` |
+| `G0DM0D3_OPENROUTER_API_KEY` | Opcional; use somente se o serviço G0DM0D3 não tiver `OPENROUTER_API_KEY` configurada |
 
-Salve as variáveis e faça um novo deploy do ATLAS. A integração é opcional: se as variáveis não existirem, o ATLAS continua usando os provedores que já estavam configurados.
+As chaves ficam apenas no servidor; nunca as coloque no navegador ou no GitHub. Salve as variáveis e faça um novo deploy do ATLAS.
 
 ### 3. Verificar
 
-Abra `/health` no endereço do ATLAS e confirme `godmod3Configured: true`. Esse indicador só confirma que URL e chave foram configuradas; para validar a conexão real, envie uma mensagem de teste pelo chat e confira se o provedor retornado é `GODMOD3 (ULTRAPLINIAN)`.
+Abra `/health` no endereço do ATLAS e confirme `g0dm0d3Configured: true`. Isso confirma apenas que URL e chave foram informadas. Depois envie uma mensagem de teste e confira nos logs do serviço se o provedor respondeu.
 
-### Limites e custos
+### Limites, custos e licença
 
-A documentação da API GODMOD3 descreve o nível Free com limite total de 5 requisições por chave, além de limites por minuto e por dia. O mecanismo ULTRAPLINIAN consulta vários modelos, então o uso do OpenRouter pode ter custos ou limites próprios, conforme os modelos e a conta configurados. Não considere a integração ilimitada ou necessariamente gratuita. Consulte os limites e preços atuais antes de ativar o serviço.
+A documentação da API informa que o nível Free tem limite total de 5 requisições por chave (além de limites por minuto e por dia). O ATLAS não elimina esses limites. O uso de modelos pelo OpenRouter também pode consumir créditos ou ter limites próprios; verifique os preços atuais antes de ativar.
 
-O GODMOD3 é licenciado sob AGPL-3.0. Esta integração usa a API remota e não incorpora código do projeto; se futuramente houver cópia ou modificação do código GODMOD3 dentro do ATLAS, será necessário avaliar e cumprir as obrigações da licença.
-
+O projeto é licenciado sob AGPL-3.0. Esta integração consome a API remota e não copia o código-fonte do G0DM0D3 para o ATLAS. Se futuramente o código for incorporado ou modificado dentro do ATLAS, será necessário avaliar e cumprir as condições da licença.
