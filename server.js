@@ -420,7 +420,7 @@ const server = http.createServer(async (req, res) => {
             : provider.name + " está temporariamente indisponível.";
         // Quota/rate-limit, falha temporária ou erro do servidor: tenta o próximo provedor.
         if (providerResponse.status === 429 || providerResponse.status >= 500 || providerResponse.status === 408) continue;
-        if (providerIndex === 0 && groqKey && (providerResponse.status === 401 || providerResponse.status === 403)) continue;
+        if ((providerResponse.status === 401 || providerResponse.status === 403) && providerIndex < providers.length - 1) continue;
         break;
       }
 
